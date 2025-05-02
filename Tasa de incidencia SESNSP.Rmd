@@ -1,0 +1,2559 @@
+---
+output:
+  pdf_document: default
+  word_document: default
+lang: es
+header-includes:
+- \usepackage{pdflscape}
+- \newcommand{\blandscape}{\begin{landscape}}
+- \newcommand{\elandscape}{\end{landscape}}
+---
+
+---
+#######################
+# Portada
+---
+
+\pagenumbering{gobble}
+
+```{r echo = FALSE, out.width = "90%", fig.align = 'center'}
+# Logo de CIMAT
+knitr::include_graphics("C:/Análisis_Delitos_SESNSP/INEGI.png")
+```
+
+\vspace{2cm}
+\begin{center}
+\huge \textbf{Tasa de incidencia delictiva dañina a nivel municipal 2020}
+\end{center}
+\vspace{5cm}
+
+\Large
+\huge\textbf{Tema:} Ciencia de datos\
+\huge\textbf{Elaboró:} Martha Aguilar Jiménez\
+\huge\textbf{Fecha:}\ Mayo de 2023
+\vspace{5cm}
+
+\newpage
+
+---
+#######################
+# Índice
+---
+
+```{=tex}
+\normalsize
+\pagebreak
+\tableofcontents
+```
+---
+#######################
+# Cuerpo del documento
+---
+
+```{=tex}
+\newpage
+\pagenumbering{arabic}
+```
+```{r setup, include = FALSE}
+# Configuración de los bloques de código.
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = "#")
+```
+
+# 1. Estado del arte.
+
+## 1.1 Objetivo general.
+
+Explicar y modelar el comportamiento de la incidencia delictiva con base en variables socio-demográficas y/o económicas.
+
+## 1.2 Objetivos específicos.
+
+* Realizar una clasificación directa de cada uno de los delitos a nivel municipal para ubicar los municipios más afectados.  
+
+* Analizar si las variables predictoras influyen o tienen relación con la incidencia en cada uno de los delitos de interés de manera individual o conjunta.
+
+* Validar los modelos planteados sobre los datos de una entidad en específico y analizar el desempeño de los mismos.
+
+## 1.3 Antecedentes.
+
+La incidencia delictiva se refiere a la presunta ocurrencia de delitos registrados en averiguaciones previas o carpetas de investigación iniciadas, reportadas por las Procuradurías Generales de Justicia, o bien, por las Fiscalías Generales de las entidades federativas para el fuero común. Ante la necesidad de disponer de información más desagregada y específica sobre la incidencia delictiva, el Secretariado Ejecutivo del Sistema Nacional de Seguridad Pública, en coordinación con distintas áreas rectoras y técnicas especializadas, tanto gubernamentales como de la sociedad civil y la academia, se dio a la tarea de elaborar e implementar la nueva metodología para el registro y clasificación de los delitos y las víctimas para fines estadísticos.
+
+La información registrada a partir de enero de 2018 con base en la nueva metodología, constituirá la estadística oficial de incidencia delictiva en el país. Las cifras de incidencia delictiva con base en la nueva metodología se desglosan en delitos de fuero común, que es información de incidencia delictiva para los ámbitos estatal y municipal y en víctimas y unidades robadas, que refiere a información de víctimas para los delitos de homicidio, secuestro, extorsión, lesiones, corrupción de menores, tráfico de menores, rapto y trata de personas; así como para unidades robadas de vehículos y tractores.
+
+
+## 1.4 Marco teórico.
+
+### K-Medias.
+
+K-medias es un método que tiene como objetivo generar una partición de un conjunto de n observaciones en k grupos. Cada grupo está representado por el promedio de los puntos que lo componen. El representante de cada grupo se denomina centroide. La cantidad de grupos a descubrir, k, es un parámetro que se debe fijar a priori. El método de clustering comienza con k centroides ubicados de forma aleatoria, y asigna cada observación al centroide más cercano. Después de asignarlos, los centroides se mueven a la ubicación promedio de todos los datos asignados a él, y se vuelven a reasignar los puntos de acuerdo a las nuevas posiciones de los centroides. El método de K-medias basa su funcionamiento en agrupar los datos de entrada en un total de k conjuntos definidos por un centroide, cuya distancia con los puntos que pertenecen a cada uno de los datos es la menor posible.
+
+El objetivo de K-medias es agrupar a las observaciones de forma tal que todas las que se encuentren en el mismo grupo sean lo más semejantes entre sí y que las pertenecientes a grupos distintos sean lo más desemejantes entre sí. Las medidas de distancia, como la euclídea, son utilizadas para medir la semejanza y desemejanza. Una medida para indicar cuán bien los centroides representan a los miembros de su grupo es la suma de los errores al cuadrado. K-medias, en cada iteración, intenta reducir el valor de la suma de los errores al cuadrado. La medida consiste en la sumatoria de las distancias al cuadrado de cada observación al centroide de su grupo:
+
+$$ C^* = min \sum_{k=1}^K N_k \sum_{C(i)=k} ||x_i - m_k||^2 $$ 
+
+El algoritmo siempre termina, ya que no necesariamente encuentra la configuración más óptima, la que se corresponde con el mínimo de la función objetivo. Hallar un mínimo de la función, a pesar de que no se trate del mínimo absoluto, garantiza un agrupamiento en el que los grupos son poco dispersos y se encuentran separados entre sí. El algoritmo es significativamente sensible a los centroides que se seleccionan inicialmente de manera aleatoria. Este efecto se puede reducir realizando varias corridas del método. Un inconveniente de este método es que es un poco robusto a datos atípicos.
+
+### Regresión lineal.
+
+La regresión lineal múltiple representa una extensión de la regresión lineal simple la diferencia es que se incluyen más de un predictor a la vez.
+
+Un modelo de regresión lineal múltiple es un modelo estadístico que permite evaluar las relaciones entre una variable dependiente y las variables independientes (predictoras).
+
+La variables predictoras pueden ser de tipo continuas, categóricas o factores, de modo que las relaciones no lineales también estén consideradas. El modelo es lineal porque consiste en términos de aditivos en los que cada término es un predictor que se multiplica por un coeficiente estimado. El término de constante (intercepción) también se añade normalmente al modelo.
+Entre las características del modelo es la capacidad de determinar la influencia relativa de una o más variables predictoras para el valor de criterio, además de la capacidad de identificar valores atípicos o anomalías.
+
+
+
+### Análisis de componentes principales.
+
+El Análisis de Componentes Principales (ACP) es una técnica estadística de síntesis de la información, o reducción de la dimensión (número de variables). Es decir, ante un banco de datos con muchas variables, el objetivo será reducirlas a un menor número perdiendo la menor cantidad de información posible.  Los nuevos componentes principales o factores serán una combinación lineal de las variables originales, y además serán independientes entre sí.
+
+Un aspecto clave en ACP es la interpretación de los factores, ya que ésta no viene dada a priori, sino que será deducida tras observar la relación de los factores con las variables iniciales (habrá, pues, que estudiar tanto el signo como la magnitud de las correlaciones). Esto no siempre es fácil, y será de vital importancia el conocimiento que el experto tenga sobre la materia de investigación. 
+
+En el caso del aprendizaje no supervisado, la variable respuesta no se tiene en cuenta ya que el objetivo no es predecir, sino extraer información empleando los predictores, por ejemplo, para identificar sub-grupos. El principal problema al que se enfrentan este tipo de métodos es la dificultad para validar los resultados, dado que no se dispone de una variable respuesta que permita contrastarlos.
+
+El método de PCA permite, por lo tanto, "condensar" la información aportada por múltiples variables en solo unas pocas componentes. Esto lo convierte en un método muy útil de aplicar previa utilización de otras técnicas estadísticas tales como regresión, clustering, etc. Aun así no hay que olvidar que sigue siendo necesario disponer del valor de las variables originales para calcular las componentes.
+
+
+### Árboles de decisión.
+
+Un árbol de decisión es un modelo de predicción cuyo objetivo principal es el aprendizaje inductivo a partir de observaciones y construcciones lógicas. Son muy similares a los sistemas de predicción basados en reglas, que sirven para representar y categorizar una serie de condiciones que suceden de forma sucesiva para la solución de un problema. Constituyen probablemente el modelo de clasificación más utilizado y popular. El conocimiento obtenido durante el proceso de aprendizaje inductivo se representa mediante un árbol. Un árbol gráficamente se representa por un conjunto de nodos, hojas y ramas. El nodo principal o raíz es el atributo a partir del cual se inicia el proceso de decisión o clasificación; los nodos internos corresponden a cada una de las preguntas acerca del atributo en particular del problema. Cada posible respuesta a los cuestionamientos se representa mediante un nodo hijo. Las ramas que salen de cada uno de estos nodos se encuentran etiquetadas con los posibles valores del atributo. Los nodos finales o nodos hoja corresponden a una decisión, la cual coincide con una de las variables clase del problema a resolver. Este modelo se construye a partir de la descripción narrativa de un problema, ya que provee una visión gráfica de la toma de decisión, especificando las variables que son evaluadas, las acciones que deben ser tomadas y el orden en el que la toma de decisión será efectuada. Cada vez que se ejecuta este tipo de modelo, sólo un camino será seguido dependiendo del valor actual de la variable evaluada. Los valores que pueden tomar las variables para este tipo de modelos pueden ser discretos o contínuos. 
+
+La variable de respuesta puede ser contínua o categórica, si es contínua entonces se está hablando de un modelo de regresión, pero si es categórica, ya se convierte en un modelo de clasificación.
+
+### Bosques aleatorios.
+
+Un bosque aleatorio es un algoritmo de Machine Learning supervisado. Surgen para solventar algunas problemáticas de los árboles de decisión (bajo poder predictivo y mucha variabilidad). Requieren seleccionar dos parámetros (parámetros de ajuste o hyperparámetros)
+
+Se le llama “bosque” porque crece un bosque de árboles de decisión. Los datos de estos árboles luego se fusionan para garantizar las predicciones más precisas. Mientras que un árbol de decisiones en solitario tiene un resultado y un rango reducido de grupos, el bosque asegura un resultado más preciso con una mayor cantidad de grupos y decisiones. Se caracteriza por ser uno de los algoritmos más utilizados debido a su precisión, simplicidad y flexibilidad. El hecho de que pueda usarse para tareas de clasificación y regresión, combinado con su naturaleza no lineal, lo hace altamente adaptable a una variedad de datos y situaciones.
+
+Tiene el beneficio adicional de agregar aleatoriedad al modelo al encontrar la mejor característica entre un subconjunto aleatorio de características. Otra de sus características es que son una técnica de ensamble que busca disminuir correlación.
+
+En los árboles de decisión no se presenta un sobre ajuste considerable a medida que se van  incrementando el número de árboles, por lo que la recomendación es tomar al menos 500 árboles para que las predicciones se estabilicen (Efron y Hastie 2021).
+
+
+# 2. Contexto de los datos.
+
+Los delitos a considerar son: **homicidio doloso**, **feminicidio**, **secuestro** y **delitos sexuales** (abuso sexual, acoso sexual, hostigamiento sexual, violación equiparada, violación simple y otros delitos que atentan contra la libertad y la seguridad sexual). Se trabajará con estos delitos porque son considerados los más dañinos para la sociedad, además de que son los más costosos para las víctimas. Dentro de todas las categorías de delitos, estos delitos tienen una cifra negra muy baja, por lo tanto la subestimación es menor.
+
+Para el presente proyecto se empleará información a nivel municipal del país, abarcando los siguientes aspectos:
+
+1. Incidencia delictiva del fuero común a nivel municipal, Secretariado Ejecutivo del Sistema Nacional de Seguridad Pública:
+
+https://datos.gob.mx/busca/dataset/incidencia-delictiva-del-fuero-comun-a-nivel-municipal
+
+2. Marco geoestadístico que incluye la delimitación de municipios y localidades, INEGI:
+
+https://www.inegi.org.mx/app/biblioteca/ficha.html?upc=889463776079
+
+3. Indicadores Laborales para los Municipios de México (ILMM), INEGI:
+
+https://www.inegi.org.mx/programas/ilmm/#Tabulados
+
+4. Indice de Rezago Social 2020, CONEVAL:
+
+https://www.coneval.org.mx/Medicion/IRS/Paginas/Indice_de_Rezago_Social_2020_anexos.aspx
+
+5. Índices de marginación 2020, CONAPO:
+
+https://www.gob.mx/conapo/documentos/indices-de-marginacion-2020-284372
+
+6. Índice cohesión social (GINI), CONEVAL:}
+
+https://www.coneval.org.mx/Medicion/Paginas/Cohesion_Social.aspx
+
+
+
+## 2.1 Preparación de las bases de datos.
+
+Para la preparación de las bases de datos, se cargan los insumos para estas.
+
+```{r,warning=FALSE, message=FALSE, include=FALSE}
+# Se limpia el espacio de trabajo
+rm(list = ls())
+# Cargar librerías
+library(xfun)
+library(kernlab)#leer datos spam
+library(tidyverse)
+library(MASS)
+library(klaR)
+library(psych)# AF por componentes principales
+library(readr)
+library(readxl)
+library(ggplot2)# Gráficos basados en grammar of graphics
+library(DataExplorer) #para realizar el análisis descriptivo con gráficos
+library(caTools)
+library(caret)
+library(leaps) #contiene la función regsubsets
+library(car)
+library(dplyr)
+library(mvtnorm)#Simular normales
+library(vcd)#Para la función mosaico
+library(grid)
+library(graphics)#Para las gráficas
+library(tidyr)#Para manejo de tablas
+library(deldir)
+library(factoextra)#Anális de datos multivariado
+library(foreign)#Leer archivos dbf        
+library(sqldf)#Sentencias sql
+library(stats)#Cálculos estadísticos
+library(scatterplot3d)#Gráficos en tercera dimensión
+library(GGally)#Para realizar las gráficas ggpairs
+library(corrplot)#Graficar las correlaciones
+library(kableExtra)#Formato de tablas en R Markdown
+library(nortest)#Para hacer la prueba de normalidad de los datos (Lilliefors)
+library(FactoMineR)#Principales métodos de componentes principales
+library(tsne)#Método tsne
+library(Rtsne)#Método Rtsne (En la salida da más elementos, en comparación con Rsne)
+library(vegan)#Método ISOMAP 
+library(smacof)#Librería incluye las funciones que realizan el MDS.
+library(kohonen)
+library(cluster)#Métod para cluster
+library(NbClust)#Método para clústers por k-means
+library(kernlab)
+library(vcd) # Para la función mosaico
+library(dendextend)
+library(tmap) #Para hacer mapas
+library(tidyverse)   # Manipular datos con >%
+library(sf)          # Trabajar con datos espaciales
+library(knitr)       # Generación de reportes
+library(ggspatial)   # Trabajar con datos espaciales
+library(ggplot2)     # Gráficos avanzados
+library(PBSmapping)  # Rosa de los vientos
+library(dplyr)       # Manipular tablas
+library(spatstat)    # Procesos poisson
+library(maptools)    # Conversión de objetos
+library(readxl)      # Leer archivos xlsx
+library(writexl)     # Escribir archivos xlsx
+library(sourcetools)
+#library(gpclib)
+library(rgdal)
+library(pryr)
+library(base)
+library(reshape2)
+library(plyr)
+library(tmap)
+#library(leaflet)
+#library(igraph)
+library(sf)
+library(mice)
+library(VIM)
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+library(leaps)#contiene la función regsubsets()
+library(lmtest)#Prueba Durbin Watson
+library(bestglm)
+library(ciTools)
+```
+
+
+```{r,warning=FALSE, message=FALSE}
+
+# Especificación de rutas y archivos para los mapas
+ruta1 <- "C:/Análisis_Delitos_SESNSP/"
+
+#Se leen las bases que se van a utilizar
+delitos<-read_csv(paste0(ruta1,"Municipal-Delitos-2015-2021_dic2021.csv"),
+                  locale=locale(encoding="latin1"))
+imm2020 <- read.csv(paste0(ruta1,"IMM_2020.csv"))
+irs <- read.csv(paste0(ruta1,"IRS_2020.csv"))
+bd_cngmd_polis <- read.csv(paste0(ruta1,"m3s1p2_cngmd2021.csv"))
+gini <- read.csv(paste0(ruta1,"gini.csv"))
+ind_lab <- read.csv(paste0(ruta1,"ind_laborales.csv"))
+
+
+# Se carga la cartografía de nacional
+mun<-st_read(paste0(ruta1, "Capas/00mun.shp"), options = "ENCODING=WINDOWS-1252", 
+             quiet = TRUE)
+```
+
+
+Por conveniencia, se cambiaron los nombres de las variables de la tabla de delitos del Secretariado Ejecutivo del Sistema Nacional de Seguridad Pública, se cambian a tipo factor las variables correspondientes.
+
+```{r,warning=FALSE, message=FALSE}
+#Renombrar
+names(delitos)[4] <- "Cve_Municipio"
+names(delitos)[6] <- "Bien_jurid_afec"
+names(delitos)[7] <- "TipoDelito"
+names(delitos)[8] <- "SubtipoDelito"
+names(imm2020)[13] <- "PL5000"
+
+
+#Convertir a factor
+delitos$Año <- as.factor(delitos$Año)
+delitos$Clave_Ent <- as.factor(delitos$Clave_Ent)
+delitos$Entidad <- as.factor(delitos$Entidad)
+#delitos$Cve_Municipio <- as.factor(delitos$Cve_Municipio)
+delitos$Municipio <- as.factor(delitos$Municipio)
+delitos$Bien_jurid_afec <- as.factor(delitos$Bien_jurid_afec)
+delitos$TipoDelito <- as.factor(delitos$TipoDelito)
+delitos$SubtipoDelito <- as.factor(delitos$SubtipoDelito)
+delitos$Modalidad <- as.factor(delitos$Modalidad)
+
+```
+
+
+Ya que se tienen las variables preparadas, se construye la base de datos en donde se calculan las tasas de incidencia delictivas por cada cien mil habitantes para los delitos: **Secuestro**, **Homicidio doloso**, **Feminicidio**, **Delitos sexuales** y la tasa que considera a todos los delitos antes mencionados, la cual se definirá de ahora en adelante como **Tasa_global**, que es la suma de las tasas de los delitos de interés. Para esto se usó la población total a nivel municipal, con base en el censo 2020, la cuál está incluida en la base "imm2020" Índice de Marginación Municipal para el 2020.
+
+Para la construcción de esta base, se tuvo que hacer la suma de los delitos de interés por municipio, para después considerar a los delitos, que un inicio eran registros de la tabla, como variables y entonces así, calcular las tasas de incidencia delictiva por cada cien mil habitantes.
+
+
+```{r,warning=FALSE, message=FALSE}
+#Filtro de delitos  de interés y año 2020
+delitos2020 <- subset(delitos[,c(1,2,4,7,8,10:21)], Año==2020)
+
+#sumar delitos anualmente
+delitos2020$Tot_Del <- rowSums(delitos2020[,6:17])
+
+#sumar delitos por municipio
+t1 <- sqldf('SELECT Cve_Municipio, SubtipoDelito, sum(Tot_Del) as Tot_Del 
+                  FROM delitos2020
+                  GROUP BY SubtipoDelito, Cve_Municipio
+                   ORDER BY Cve_Municipio' )
+
+#Transponer la matriz (delitos como variables)
+del_transp <- spread(data = t1, key = SubtipoDelito, value = Tot_Del)
+del_transp <- del_transp[,c(1,4,5,18,21,22,33,50,53,54)]
+names(del_transp) <- c("CVE_MUN", "Ab_sex", "Ac_sex", "Feminicidio", "Homic_dol",
+                       "Host_sex", "Otros_Sex", "Secuestro",
+                       "Violac_eq", "Violac_simple")
+
+#Agrupar delitos sexuales
+del_transp$Del_sex <- rowSums(del_transp[,c(2,3,6,7,9,10)])
+del_transp <- del_transp[,-c(2,3,6,7,9,10)]
+
+#Extraer la población del IMM 2020
+pob <- subset(imm2020[,c(3,5)])
+
+# Uniendo tablas del_trans Y pob
+t2 <- sqldf('SELECT * FROM del_transp AS D, pob AS P
+            WHERE D.CVE_MUN == P.CVE_MUN')
+
+#Base de datos final
+delitos_final <- t2[,-1]
+rownames(delitos_final) <- delitos_final$CVE_MUN
+
+# Hacer copia
+delitos_tasas <- delitos_final
+
+# Tasa por cada delito
+I <- nrow(delitos_tasas)
+J <- 4
+for (i in 1:I) {
+  for (j in 1:J) {
+    delitos_tasas[i,j] <- (delitos_tasas[i,j] / delitos_tasas[i,6])*100000
+  }
+}
+
+#Tasa global por municipio
+delitos_tasas$Tasa_global <- rowSums(delitos_tasas[,1:4])
+```
+
+```{=tex}
+\normalsize
+\pagebreak
+```
+
+```{r, echo=FALSE}
+
+knitr::kable(head(delitos_tasas), caption = "Incidencia delictiva por cada 100,000 habitantes.", align = "c", digits = 3)
+```
+
+
+Una vez lista la tabla cuyo contenido es la incidencia delictiva, se define la tabla con la que se trabajarán los modelos y algoritmos en el desarrollo del presente documento.
+
+Para esto, primero se calculará la tasa de policías por cada cien mil habitantes a nivel municipal, y finalmente, se arme la base de datos final.
+
+
+```{r}
+## Cálculo de policías
+policias <- sqldf('SELECT ubicageo_c, sum(sexostt) as Policias 
+                  FROM bd_cngmd_polis
+                  WHERE orgapoli_e BETWEEN 1 AND 7
+                  GROUP BY ubicageo_c
+                   ORDER BY ubicageo_c' )
+
+# Base de datos final
+bd <- sqldf('SELECT D.CVE_MUN, D.POB_TOT, D.Tasa_global, D.Feminicidio, D.Homic_dol,
+                D.Secuestro, D.Del_sex,
+                M.ANALF, M.SBASC, M.OVSDE, M.OVSEE, M.OVSAE, M.OVPT, M.VHAC, M.PL5000,
+                M.PO2SM, M.IM_2020, M.IMN_2020,
+                R.NOESC_614, R.PSDSS, R.IRS,
+                G.GINI, P.policias, Q.PEA
+                
+            FROM delitos_tasas AS D, imm2020 AS M, irs AS R, gini AS G,
+              policias AS P, ind_lab AS Q
+            WHERE D.CVE_MUN = M.CVE_MUN AND M.CVE_MUN = R.CVE_MUN AND R.CVE_MUN = G.CVE_MUN
+              AND G.CVE_MUN = P.ubicageo_c AND P.ubicageo_c = Q.CVE_MUN')
+
+rownames(bd) <- bd$CVE_MUN
+
+# Cálculo tasa policías
+bd$tasa_poli <- (bd$Policias/bd$POB_TOT)*100000
+bd <- bd[,-23]
+
+```
+
+
+
+
+```{=tex}
+\normalsize
+\pagebreak
+```
+
+```{r, echo=FALSE}
+
+bd$GINI <- as.numeric(bd$GINI)
+
+#knitr::kable(head(bd[,1:9]), caption = "Dataset final (1 de 2).", digits = 3, align = "c")
+#knitr::kable(head(bd[,10:18]), caption = "Dataset final (2 de 2).", digits = 3, align = "c")
+```
+
+
+Ya que están bien definidas las tablas con las que se trabajarán, falta preparar la base para dibujar los mapas.
+
+```{r,warning=FALSE, message=FALSE}
+#Definición de la variable CVEGEO
+delitos_tasas2 <- delitos_tasas
+delitos_tasas2$CVEGEO <- ifelse(delitos_tasas$CVE_MUN<9018,
+                                paste(0,delitos_tasas$CVE_MUN,sep=""),
+                                delitos_tasas$CVE_MUN)
+
+#Uniendo las tablas
+map_mun<-merge(mun, delitos_tasas2, by= "CVEGEO")
+
+#Limpiar la base de datos y renombrando variables.
+map_mun<-map_mun[,-3]
+names(map_mun)[8] <-"CVE_MUN"
+```
+
+```{=tex}
+\normalsize
+\pagebreak
+```
+
+```{r, echo=FALSE}
+
+knitr::kable(head(map_mun[,1:5]), caption = "Datos geográficos (1 de 2).", digits = 3, align = "c")
+```
+
+```{r, echo=FALSE}
+knitr::kable(head(map_mun[,6:11]), caption = "Datos geográficos (2 de 2).", digits = 3, align = "c")
+```
+
+
+```{r, echo=FALSE}
+
+# Base de datos final
+bd2 <- sqldf('SELECT D.CVE_MUN, D.Feminicidio, D.Homic_dol, D.Secuestro, D.Del_sex,D.Tasa_global,D.POB_TOT,
+M.ANALF, M.SBASC, M.OVSDE,M.OVSEE, M.OVSAE,M.OVPT,M.VHAC,M.PL5000,M.PO2SM,M.IM_2020, M.IMN_2020,
+R.NOESC_614, R.PSDSS, R.IRS, 
+G.GINI,
+P.policias,
+Q.PEA
+FROM delitos_tasas AS D, imm2020 AS M, irs AS R, gini AS G, policias AS P, ind_lab AS Q
+            WHERE D.CVE_MUN = M.CVE_MUN AND M.CVE_MUN = R.CVE_MUN AND R.CVE_MUN = G.CVE_MUN
+              AND G.CVE_MUN = P.ubicageo_c AND P.ubicageo_c=Q.CVE_MUN')
+                
+# Cálculo tasa policías
+bd2$tasa_poli <- (bd2$Policias/bd2$POB_TOT)*100000
+#Las variables del índice de Gini se convierten en numéricas
+
+bd2$GINI <- as.numeric(bd2$GINI)
+#Eliminar la columna policias
+bd2<-bd2[,-23]
+#Se coloca el nombre de municipio en los renglones de la base
+rownames(bd2) <- bd2$CVE_MUN
+
+#Primero debemos remover todos los faltantes na.omit()
+bd_full2 <- na.omit(bd2)
+
+#Se estandarizan los datos sin considerar a las variables de tipo carácter
+bd_std2<-bd_full2[,-7]
+bd_std2[,c(2:23)]<-scale(bd_std2[, c(2:23)], center = TRUE, scale = TRUE)
+
+```
+
+
+
+```{=tex}
+\normalsize
+\pagebreak
+```
+
+
+## 2.2 Variables.
+
+A continuación, se enlistan las variables de la base de datos IMM 2020.
+
+```{r echo = FALSE}
+
+#ACTUALIZAR LAS TABLITAS EN EXCEL
+
+# Se carga el FD de ATUS
+fd_imm<-read_excel(paste0(ruta1, file = "Info_Proy_CD.xlsx"), 
+               sheet = "IMM")
+# Se carga la información del DENUE
+fd_irs<-read_excel(paste0(ruta1, file = "Info_Proy_CD.xlsx"), 
+                     sheet = "IRS")
+# Se carga la información de vialidades
+fd_otras<-read_excel(paste0(ruta1, file = "Info_Proy_CD.xlsx"), 
+                     sheet = "Otras")
+# Evitar valores NA
+options(knitr.kable.NA = "")
+# Imprimir la información
+knitr::kable(fd_imm, caption = "Descripción de las variables IMM 2020.", 
+             col.names = c("Campo", "Descripción"))
+```
+
+Con respecto a la base de datos del IRS, se presentan las variables a continuación.
+
+```{r echo = FALSE}
+# Evitar valores NA
+options(knitr.kable.NA = "")
+# Imprimir la información
+knitr::kable(fd_irs, caption = "Descripción de las variables IRS 2020.", 
+             col.names = c("Campo", "Descripción"))
+```
+
+En cuanto a la información sobre el resto de las variables, los campos que abarcan son los siguientes:
+
+```{r echo = FALSE}
+# Evitar valores NA
+options(knitr.kable.NA = "")
+# Imprimir la información
+knitr::kable(fd_otras, caption = "Descripción del resto de las variables.", 
+             col.names = c("Campo", "Descripción"))
+```
+
+\newpage
+
+# 3. Análisis exploratorio.
+
+A continuación se presenta un análisis exploratorio de la información sobre las tasas de delitos de interés, así como de las variables que se usarán para explicar y predecir el comportamiento de dichas tasas.
+
+## 3.1 Delitos.
+
+Lo que respecta a los registros directamente del Secretariado de los delitos, es decir, al conteo que se tuvo durante el año 2020, se tiene lo siguiente
+
+```{r}
+#barplot de frecuencias absolutas
+delitos_eti<- c("Feminicidio", "Homicidio","Secuestro","Del. sex.")
+
+sum_del <- apply(X= delitos_final[,c(1:4)], MARGIN=2, FUN= sum)
+bar <- barplot(sum_del, col = "lightblue", ylim = c(0, 60000),
+             main= "Frecuencia de los delitos bajo estudio",
+             names.arg=delitos_eti,las=1)
+text(bar,sum_del + 0.2, labels = sum_del, pos=3,cex = 0.7)
+
+```
+Como se observa en el gráfico anterior, la mayor incidencia la tienen los delitos sexuales, seguido del homicidio, después aparece el feminicidio y no con mucha diferencia está el secuestro, que dicho sea de paso, son los conteos a nivel nacional. En realidad es de esperarse que los delitos sexuales sean los de mayor frecuencia, porque es una agrupación de varios delitos de índole sexual.
+
+## 3.2 Tasa de delitos por cada cien mil habitantes.
+
+Como el conteo directo de los delitos no dice mucho al querer hacer comparativos, se tienen que estandarizar de alguna manera, esto se logra con la tasa de incidencia por cada cien mil habitantes
+
+$$T_d = \frac{D}{P_T}(100,000)$$
+
+donde $T_d$ es la tasa por delito, $D$ es el número de delitos durante 2020 y $P_T$ es la población total municipal.
+
+Y entonces así el dato será comparable, en este caso, entre los municipios. A continuación se presentan algunas estadísticas descriptivas:
+
+```{r,warning=FALSE, message=FALSE}
+# Es un data frame con 7 variables y 2,463 observaciones. 
+ describe(delitos_tasas[,-c(5,6)])
+```
+
+
+1. Se observa que la tasa de incidencia de feminicidios por cada cien mil habitantes, a nivel municipal en 2020 se llama "Feminicidio", con 2463 observaciones, con una media de 0.73, con un valor mínimo de la tasa de 0 y un valor máximo de la tasa de 107.30.
+
+2. La tasa de incidencia de Homicidios dolosos por cada cien mil habitantes a nivel municipal en 2020 se llama "Hom_dol", con 2463 observaciones, con una media de 18.26, con un valor mínimo de la tasa de 0 y un valor máximo de la tasa de 1691.18.
+
+3. La tasa de incidencia de secuestro por cada cien mil habitantes a nivel municipal en 2020 se llama "Secuestro", con 2463 observaciones, con una media de 0.65, con un valor mínimo de la tasa de 0 y un valor máximo de la tasa de 69.16.
+
+4. Por otro lado,la tasa de incidencia de delitos sexuales por cada cien mil habitantes a nivel municipal en 2020 se llama "Del_sex", con 2463 observaciones, con una media de 26.10, con un valor mínimo de la tasa de 0 y un valor máximo de la tasa de 735.29.
+
+5. Finalmente, la tasa de incidencia de delitos de interés considerados como los más dañinos por cada cien mil habitantes a nivel municipal en 2020 se llama "Tasa_global", con 2463 observaciones, con una media de 45.74, con un valor mínimo de la tasa de 0 y un valor máximo de la tasa de 1691.18.
+
+**Clasificación exploratoria.**
+
+Para plantear un panorama general del comportamiento delictivo de interés en el país, se visualizarán las tasas de incidencia delictiva en mapas de la República Mexicana, a nivel municipal. 
+
+La idea es realizar un análisis gráfico, en donde a través de dichos mapas, se clasifique a la tasa de incidencia dependiendo del valor de ésta por medio del método de agrupación "k-means".
+
+Se considerarán 5 grupos de clasificación.
+
+```{r,warning=FALSE, message=FALSE}
+tm_shape(map_mun)+
+tm_fill("Tasa_global", id="CVEGEO", palette= "Oranges",style="kmeans",title="k-medias")+
+  tm_borders("grey25",alpha=0.05)+
+  tm_layout("Tasa global de incidencia delictiva municipal 2020",title.size=1, 
+            main.title.position="center")+
+  tm_view(view.legend.position = c("left","bottom"))
+```
+
+
+Los clústers están distribuidos de diferente manera, de hecho, en los tres primeros intervalos sus rangos son más pequeños de tal manera que hay mayor número de municipios en estos intervalos.
+
+La clasificación que realizó el método de k-medias es la siguiente:
+
+1.- [0-29)
+
+2.- [29-73)
+
+3.- [73-149)
+
+4.- [149-1,213)
+
+5.- [1,213-1,691]
+
+Se observa que en el primer intervalo se está considerando a los municipios con una tasa global de 0 a 29, algunos municipios son 04010, 05036, 07092, 10027, 12054, 25010, 26033, 31096, etc. En esta clasificación hay 966 municipios.
+
+En el segundo grupo la tasa global considera los valores de 29 a 73, algunos municipios pertenecientes a esta clasificación son 01001, 08005, 17026, 19001,20059, 24026, 26006,28033, entre otros. En esta clasificación hay 1053 municipios.
+
+Para el tercer grupo el k-means consideró a los municipios cuyas tasas generales toman valores entre 73 a 149, algunos municipios dentro de este grupo son 02002, 05003, 08047, 9010, 12029, 21085, 26061 y 30144, etc. En esta clasificación hay 370 municipios.
+
+Los municipios que conforman el cuarto grupo son los que tienen tasas entre 149 a 1213, algunos municipios son 02001, 08009, 05012, 06007, 08037, 24044, 23003, 32010, entre otros. En total en esta clasificación hay 73 municipios.
+
+Finalmente, la última clasificación está conformada por municipios cuyas tasas generales de incidencia oscila entre 1,213 y 1,691 incidentes por cada cien mil habitantes. En este grupo se asignó solo al municipio 19015. 
+
+Como primera vistazo de la tasa general de incidencia delictiva por cada cien mil habitantes, se puede ver que en casi la mitad de los municipios del país, se tiene una tasa relativamente baja, sin embargo, en la parte norte, sobre todo en las entidades de Baja california, Chihuahua y Sonora hay una incidencia bastante alta, así como también en el estado de Quintana Roo, sin dejar de lado, los municipios dispersos en el resto del país, como algunos del estado de Oaxaca o México.
+
+
+Ahora se realiza la visualización de por cada delitos de interés.
+
+**Homicidio doloso**
+
+
+```{r,warning=FALSE, message=FALSE}
+tm_shape(map_mun)+
+tm_fill("Homic_dol", id="CVEGEO", palette= "Oranges",style="kmeans",title="k-medias")+
+  tm_borders("grey25",alpha=0.05)+
+  tm_layout("Tasa de incidencia de homicidios municipal 2020",title.size=1,
+            main.title.position="center")+
+  tm_view(view.legend.position = c("left","bottom"))
+```
+
+
+Los tres primeros intervalos sus rangos son más pequeños de tal manera que hay mayor número de municipios en estos intervalos.
+
+La clasificación que realizó el método de k-medias es la siguiente:
+
+1.- [0-15)
+
+2.- [15-51)
+
+3.- [51-120)
+
+4.- [120-983)
+
+5.- [983-1,691]
+
+Se observa que en el primer intervalo se está considerando a los municipios con una tasa global de 0 a 15, algunos municipios son 03003, 04005, 7007, 9007, 17032, 24002, 26013, 29010 etc. En esta clasificación hay 1543 municipios, es decir, el 62.6%.
+
+En el segundo grupo la tasa de homicidios considera los valores de 15 a 51, algunos municipios pertenecientes a esta clasificación son 04009, 05023, 10015, 16099, 24050, 25013, 27008, 28035, entre otros. En esta clasificación hay 709 municipios, lo que representa un 28.8% respecto al total de municipios.
+
+Para el tercer grupo, el k-means consideró a los municipios cuyas tasas de homicidios toman valores entre 51 a 120, algunos municipios dentro de este grupo son 11002, 12035, 14102, 17017, 17033, 23003, 23009, 30117, etc. En esta clasificación hay 177 municipios, representando 7.2% respecto al total.
+
+Los municipios que conforman el cuarto grupo son los que tienen tasas entre 120 a 983, algunos municipios son 6001, 6007, 11036, 17001, 19002, 21176, 26025, 26068, entre otros. En total en esta clasificación hay 33 municipios.
+
+Finalmente, la última clasificación está conformada por municipios cuyas tasas de homicidios oscila entre 983 y 1,691 incidentes por cada cien mil habitantes. En este grupo se asignó solo al municipio 19015. 
+
+Lo que respecta al homicidio, tiene la clasificación y dispersión municipal que se aprecia, tiene cierta similitud con la tasa general que ya se comentó anteriormente, lo que quiere decir que este delito, tiene un impacto interesante con la tasa general.
+
+
+**Feminicidio**
+
+
+```{r,warning=FALSE, message=FALSE}
+tm_shape(map_mun)+
+tm_fill("Feminicidio", id="CVEGEO", palette= "Oranges",style="kmeans",title="k-medias")+
+  tm_borders("grey25",alpha=0.05)+
+  tm_layout("Tasa de incidencia de feminicidios municipal 2020",title.size=1, 
+            main.title.position="center")+
+  tm_view(view.legend.position = c("left","bottom"))
+```
+
+
+Como ocurre con las clasificaciones anteriores, los tres primeros intervalos son más pequeños,de tal manera que hay mayor número de municipios en estos intervalos.
+
+La clasificación que realizó el método de k-medias es la siguiente:
+
+1.- [0-1.8)
+
+2.- [1.8-6.9)
+
+3.- [6.9-18)
+
+4.- [18-47)
+
+5.- [47-107.3]
+
+Se observa que en el primer intervalo se está considerando a los municipios con una tasa global de 0 a 1.8. En esta clasificación hay 2208 municipios, es decir, el 89.6%. Afortunadamente, es la gran mayoría de municipios.
+
+En el segundo grupo la tasa de feminicidios considera los valores de 1.8 a 6.9, algunos municipios pertenecientes a esta clasificación son 04011, 5033, 10023, 13019, 14030, 15075, 21110, 23003, entre otros. En esta clasificación hay 200 municipios, lo que representa un 8.1% respecto al total de municipios.
+
+Para el tercer grupo el k-means consideró a los municipios cuyas tasas de feminicidios toman valores entre 6.9 a 18, algunos municipios dentro de este grupo son 11036, 14090, 16051, 20012, 21213, 26056, 29042, 30178, etc. En esta clasificación hay 44 municipios, representando 1.8% respecto al total.
+
+Los municipios que conforman el cuarto grupo son los que tienen tasas de feminicidios entre 18 a 47, en esta categoría solo están 7 municipios los cuales son 14057, 20102, 20108, 20156, 26049, 28008 y 31037.
+
+Finalmente, la última clasificación está conformada por municipios cuyas tasas de homicidios oscila entre 47 y 107.3 incidentes por cada cien mil habitantes. En este grupo se asignó solo a 4 municipios los cuales son 5012, 19003, 20230 y 28010. 
+
+Como ya se mencionó, afortunadamente en la mayoría del país, la tasa de feminicidios se queda con la tasa más baja, por lo menos con esta clasificación, y en comparación con el homicidio doloso, por ejemplo, la distribución en los municipios, es muy diferente.
+
+**Secuestro**
+
+```{r,warning=FALSE, message=FALSE}
+tm_shape(map_mun)+
+tm_fill("Secuestro", id="CVEGEO", palette= "Oranges",style="kmeans",title="k-medias")+
+  tm_borders("grey25",alpha=0.05)+
+  tm_layout("Tasa de incidencia de secuestros municipal 2020",title.size=1,
+            main.title.position="center")+
+  tm_view(view.legend.position = c("left","bottom"))
+```
+
+
+
+La clasificación que realizó el método de k-medias es la siguiente:
+
+1.- [0-1.49)
+
+2.- [1.49-5.36)
+
+3.- [5.36-12.8)
+
+4.- [12.8-31.99)
+
+5.- [31.99-69.16]
+
+Se observa que en el primer intervalo se está considerando a los municipios con una tasa global de 0 a 1.49. En esta clasificación hay 2225 municipios, es decir, el 90.3%. Afortunadamente, es la gran mayoría de municipios.
+
+En el segundo grupo la tasa de secuestros considera los valores de 1.49 a 5.36, algunos municipios pertenecientes a esta clasificación son 03001, 06007, 07047, 09002, 13070, 15095, 17018, 28002, 29033, 30206 , entre otros. En esta clasificación hay 146 municipios, lo que representa un 5.9% respecto al total de municipios.
+
+Para el tercer grupo el k-means consideró a los municipios cuyas tasas de secuestros toman valores entre 5.36 a 12.8, algunos municipios dentro de este grupo son 05011, 08040, 12033, 13044, 15027, 16111, 19049, 21176, 24041, 30115,32031, etc. En esta clasificación hay 66 municipios, representando 2.7% respecto al total.}
+
+Los municipios que conforman el cuarto grupo son los que tienen tasas de secuestros entre 12.8 a 31.99, en esta categoría están 23 municipios pertenecientes a esta clasificación algunos municipios son 14072, 15068, 17009, 19037, 20345, 21168, 29053, 30139, 32053, entre otros. 
+
+Finalmente, la última clasificación está conformada por municipios cuyas tasas de secuestro oscila entre 31.99 y 69.16 incidentes por cada cien mil habitantes. En este grupo se asignó solo a 3 municipios los cuales son 20056, 21031 y 32058.
+
+En lo que tiene que ver con el secuestro, no hay una tasa de incidencia tan alta como uno pensaría, sin embargo, es importante destacar que el último grupo es abarca un intervalo muy amplio, por lo que en estricto sentido, no se pueden comparar directamente los tres municipios que pertenecen a esta última clasificación.
+
+
+**Delitos sexuales**
+
+```{r,warning=FALSE, message=FALSE}
+tm_shape(map_mun)+
+tm_fill("Del_sex", id="CVEGEO", palette= "Oranges",style="kmeans",title="k-medias")+
+  tm_borders("grey25",alpha=0.05)+
+  tm_layout("Tasa de incidencia de delitos sexuales municipal 2020",title.size=1,
+            main.title.position="center")+
+  tm_view(view.legend.position = c("left","bottom"))
+```
+
+La clasificación que realizó el método de k-medias es la siguiente:
+
+1.- [0-14.1)
+
+2.- [14.1-38.9)
+
+3.- [38.9-74.1)
+
+4.- [74.1-162.5)
+
+5.- [162.5-735.3]
+
+Se observa que en el primer intervalo se está considerando a los municipios con una tasa de delitos sexuales de 0 a 14.1. En esta clasificación hay 974 municipios, es decir, el 39.5%. Algunos municipios son 04008, 05012, 07007, 08022, 10010, 14106, 17027, 20037, 20528, 26024, 29059, 31039, 32035, entre otros.
+
+En el segundo grupo la tasa de delitos sexuales considera los valores de 14.1 a 38.9, algunos municipios pertenecientes a esta clasificación son 01010, 04009, 05035, 07122, 08055, 10038, 14036, 24041, 31103, 32040, entre otros. En esta clasificación hay 899 municipios, lo que representa un 36.5% respecto al total de municipios.
+
+Para el tercer grupo, el k-means consideró a los municipios cuyas tasas de delitos sexuales toman valores entre 38.9 a 74.1, algunos municipios dentro de este grupo son 01001, 02002, 03002, 13015, 19046, 22005, 30098, 32009, etc. En esta clasificación hay 464 municipios, representando 18.8% respecto al total.
+
+Los municipios que conforman el cuarto grupo son los que tienen tasas de secuestros entre 74.1 a 162.5, en esta categoría están 109 municipios, lo que corresponde al 4.4% respecto al total pertenecientes a esta clasificación algunos municipios son 02001, 06004, 8059, 9016, 13038, 17006, 19045, 20542, 23009, 26060, 32058, entre otros. 
+
+Finalmente, la última clasificación está conformada por municipios cuyas tasas de delitos sexuales oscila entre 162.5 y 735.3 incidentes por cada cien mil habitantes. En este grupo se asignó solo a 17 municipios algunos de ellos son 05005, 08061, 09015, 19040, 20121, 20338, 26015, 26065 entre otros. 
+
+Visualmente, los delitos sexuales, tienen un comportamiento similar a la tasa general, por lo que también se puede decir que los delitos sexuales tienen impacto importante en la tasa general, al igual que el homicidio doloso.
+
+
+
+## 3.3 Variables predictoras (sociodemográficas).
+
+Como el objetivo es explicar y predecir el comportamiento de las tasas de incidencia delictiva, se trabajó con algunas variables de índole social según el municipio, que tienen que ver con índices de marginación, de rezago y desigualdad social, así como la tasa de policías por cada cien mil habitantes y con la población económicamente activa.
+
+```{r}
+summary(bd[,-c(1,2)])
+```
+
+
+
+Se sabe que las variables que tienen que ver con marginación y rezago social están expresadas en porcentajes, es decir, los valores posibles son de 0 a 100, la tasa global y la tasa de policías están representadas por cada cien mil habitantes por municipio, mientras que el índice de Gini se expresa en una escala de 0 a 1. Según la salida anterior, se ve que hay datos faltantes, por lo que a continuación se visualizarán dichos datos.
+
+```{r}
+aggr(bd, prop=FALSE, numbers=TRUE, cex.axis = 0.5)
+```
+
+
+Derivado del gráfico anterior, para el caso de **GINI** solo tiene un dato faltante, mientras que para **tasa_poli**, se tienen dieciséis. En cuanto a la proporción del dataset, un registro tiene ausencia de valores en **GINI**, y otros dieciseis están ausentes en la variable **tasas_poli**, que justamente corresponden a las alcaldías de la Ciudad de México. En resumen, de los 2463 municipios contemplados, solo 2441 tienen información completa, lo que significa que, solamente sobre estos municipios se trabajará a partir de aquí.
+
+```{r}
+bd_full <- na.omit(bd)
+bd_full$GINI <- as.numeric(bd_full$GINI)
+str(bd_full)
+```
+
+Ya que se quitaron los registros con datos faltantes, se hará un gráfico de caja y bigotes para ver el comportamiento de las variables.
+
+```{r}
+boxplot(bd_full[,-c(1,2)], col = rainbow(22), cex.axis = 0.7, las=2)
+```
+
+De acuerdo con el gráfico de caja y bigotes, la variable **tasa_poli** tiene muchos datos atípicos, lo que implica que las escalas estén muy desfasadas, por lo tanto se recomienda estandarizar los datos para que sean comparables.
+
+```{r}
+bd_std <- bd_full[,-2]
+
+bd_std[, -1] <- scale(bd_std, scale = TRUE, center = TRUE)
+
+boxplot(bd_std[,-1], col = rainbow(22), cex.axis = 0.7, las=2)
+```
+
+Como se aprecia en el gráfico anterior, ya las variables resultan más parejas, pues ya todas oscilan alrededor del cero, aunque cabe resaltar que ahora las que tienen valores un tanto inusuales, son las tasas de los delitos, mientras que los índices de marginación y la variable que mide el porcentaje de personas entre los 6 y 14 años que no fueron a la escuela, tienen datos atípicos negativos importantes.
+
+Ahora, resulta interesante ver la interacción entre las variables, tal como la correlación y la dispersión entre estas.
+
+```{r}
+# Función para gráficos de dispersión
+lowerFn<-function(data, mapping, method = "lm", ...){
+p <- ggplot(data = data, mapping = mapping) +
+   geom_point(colour = "blue") +
+   geom_smooth(method = method, color = "red", ...)
+p}
+
+# Matriz de gráficos de dispersión parte 1
+ggpairs(bd_std[,2:6], lower = list(continuous = wrap(lowerFn, method = "lm")), 
+        diag = list(continuous = wrap("barDiag", colour = "blue")), 
+        upper = list(continuous = wrap("cor", size = 4)), 
+        title = "Matriz de gráficos de dispersión - parte 1")
+```
+
+De acuerdo con la salida anterior, se aprecia una correlación importante entre el secuestro y el feminicidio, entre los demás delitos la correlación no es relevante. En cuanto a la dispersión de la tasa global, parece que todo es constante, esto tiene sentido pues en realidad la tasa es un campo calculado a partir de los otros delitos, en cuanto a las tasas de los otros delitos, tienen un sesgo positivo muy importante.
+
+
+```{r}
+# Matriz de gráficos de dispersión parte 2
+ggpairs(bd_std[,7:11], lower = list(continuous = wrap(lowerFn, method = "lm")), 
+        diag = list(continuous = wrap("barDiag", colour = "blue")), 
+        upper = list(continuous = wrap("cor", size = 4)), 
+        title = "Matriz de gráficos de dispersión - parte 2")
+```
+
+En los gráficos previos, pudiera parecer que hay una tendencia lineal con la variable SBASC y OVSDE, sin embargo, con respecto a la variable ANALF, todo está muy aglomerado del lado izquierdo de las gráficas de dispersión. En cuanto a las correlaciones, las únicas importantes son entre las variables OVSDE vs SBASC y OVSAE y OVSEE, las demás no parecen tener relevancia.
+
+```{r}
+# Matriz de gráficos de dispersión parte 3
+ggpairs(bd_std[,12:17], lower = list(continuous = wrap(lowerFn, method = "lm")), 
+        diag = list(continuous = wrap("barDiag", colour = "blue")), 
+        upper = list(continuous = wrap("cor", size = 4)), 
+        title = "Matriz de gráficos de dispersión - parte 3")
+```
+Según el gráfico anterior, parece que todas las variables tienen al menos un tipo de tendencia; OVPT, VHAC y PL500 están sesgadas positivamente, mientras que el resto, lo están hacia la izquierda (negativo). A diferencia de las variables anteriores, parece que las correlaciones ya toman más relevancia, pues hay coeficientes ya importantes, como las de la variable IMN_2020 e IM_2020.
+
+
+
+```{r}
+# Matriz de gráficos de dispersión parte 4
+ggpairs(bd_std[,18:23], lower = list(continuous = wrap(lowerFn, method = "lm")), 
+        diag = list(continuous = wrap("barDiag", colour = "blue")), 
+        upper = list(continuous = wrap("cor", size = 4)), 
+        title = "Matriz de gráficos de dispersión - parte 4")
+```
+En esta última gráfica, se aprecia solamente en la variable NOESC_614 contra las demás, cierta tendencia, porque en las demás todo parece ser relativamente constante; la única correlación importante corresponde entre las variables GINI y NOESC_614. Con respecto a las distribuciones, la variable tasa_poli parece que tiene un comportamiento normal.
+
+
+# 4. Desarrollo y resultados.
+
+
+## 4.1 K-Medias
+
+Como parte del análisis, se pretende clasificar la incidencia delictiva dependiendo de las variables sociodemográficas de interés.
+
+Para elegir el número óptimo de clústers para el modelo, se hará dependiendo de algunos criterios.
+
+```{r, message=FALSE, warning=FALSE}
+### K-MEANS
+bd_kmeans <- bd_std[,-c(2:6,16,17,20)]
+bd_kmeans <- na.omit(bd_kmeans) #Se eliminó un registro
+set.seed(1)
+par(mfrow=c(1, 3))
+fviz_nbclust(bd_kmeans[,-1], kmeans, method = "wss")
+fviz_nbclust(bd_kmeans[,-1], kmeans, method = "silhouette")
+fviz_nbclust(bd_kmeans[,-1], kmeans, method = "gap_stat")
+```
+De acuerdo con los tres criterios para la elección del número óptimo de clústers, el criterio del codo en realidad no aporta mucho, pues la línea tiene una trayectoria curva, y no se aprecia muy bien en dónde se encuentra el mayor cambio de trayectoria. Con respecto a los criterios de la silueta y de las estadísticas gap, ambos sugieren dos clústers. En este sentido, pese a que la mayoría sugiere dos grupos, se va a optar por tres, esto para una mejor clasificación en cuanto a lo conceptual se refiere.
+
+
+```{r}
+
+#Seleccionar 3 clusters
+set.seed(1)
+k <- 3
+mod_kmeans <- kmeans(bd_kmeans[,-1], centers = k)
+fviz_cluster(mod_kmeans, data = bd_kmeans[,-1])
+
+```
+
+De acuerdo con el modelo, las dos primeras dimensiones explican poco más del 54% de la varianza. En cuanto a los grupos,  se ven municipios en los extremos, por ejemplo, en el grupo tres (azul), se observa el municipio 8008 de Chihuahua o el 14061 en Jalisco, en cuanto al clúster uno (rojo), se alcanza a ver el municipio 8009 en Chihuahua, y en cuanto al otro grupo (verde), se aprecian municipios como 23002 de Quintana Roo o 20172 en Oaxaca.
+
+Para entender un poco de qué es lo que tratan los grupos, se hará lo siguiente
+
+```{r}
+#crear nuevo dataset (para ver de qué se tratan los clusters)
+bd_kmeans$clus <- as.factor(mod_kmeans$cluster)
+table(bd_kmeans$clus)
+```
+
+En este algoritmo, se aprecian 1116 en el grupo uno, 1006 en el dos y solo 319 en el tercero.
+
+
+```{r}
+gpo1 <- mod_kmeans$centers[1,]
+gpo2 <- mod_kmeans$centers[2,]
+gpo3 <- mod_kmeans$centers[3,]
+
+plot(gpo1, type = "l", lwd=2, col="red", ylim=c(-2,4))
+lines(gpo2, col="green", lwd=2)
+lines(gpo3, col="blue", lwd=2)
+abline(h=0, lty=2)
+legend(x="topright", legend = c("Gpo1", "Gpo2", "Gpo3"), fill = c("red", "green", "blue"))
+
+```
+
+La interpretación del grupo tres es que está agrupando a los municipios cuyos valores es mayor en casi todas las variables excepto en las variables 1 y 10, que corresponden a analfabetismo y a los que no van a la escuela en edades de entre 6 y 14 años; este grupo se puede decir que es el que más carencias y desigualdades sufre. En cuanto al grupo uno (rojo) al apreciarse constante, se puede decir que es un grupo que no tiene las carencias del grupo azul, pero tampoco tiene la fortuna del grupo dos. Dicho grupo dos (verde) al ser el más bajo en general en las variables, se puede decir que es el que menor vulnerabilidad presenta.
+
+Para mejor interpretación, se plasmará lo anterior en un mapa, mencionando que se intercambió la nomenclatura de los grupos para una mejor visualización, en este caso, sólo se intercambiaron los grupos 1 y 2, para apreciar la escala ascendente, en donde los tonos más claros, son los municipios que menos sufren, mientras que los más intensos son los más vulnerados.
+
+```{r}
+#Definición de la variable CVEGEO
+bd_kmeans$CVEGEO <- ifelse(bd_kmeans$CVE_MUN<9018,
+                                paste(0,bd_kmeans$CVE_MUN,sep=""),
+                                bd_kmeans$CVE_MUN)
+#Intercambio de nomenclatura
+cluster <- transmute(bd_kmeans, 
+                       cluster=case_when(clus== 1 ~ 2,
+                                         clus==2 ~ 1,
+                                         clus==3 ~ 3))
+
+bd_kmeans$cluster <- cluster$cluster
+                        
+
+map_mun<-merge(map_mun, bd_kmeans, by= "CVEGEO")
+
+#Limpiar la base de datos y renombrando variables.
+map_mun<-map_mun[,-11]
+names(map_mun)[8] <-"CVE_MUN"
+```
+
+
+```{r}
+
+#Se grafica el mapa
+tm_shape(map_mun)+
+tm_fill("cluster", id="CVEGEO", palette= "Oranges",style="cat",title="Clústers")+
+  tm_borders("grey25",alpha=0.05)+
+  tm_layout("Clasificación k-means",title.size=1, 
+            main.title.position="center")+
+  tm_view(view.legend.position = c("left","bottom"))
+
+```
+De acuerdo con el mapa anterior, los municipios con los tonos más intensos, son los que pertenecen al grupo 3, que son los más afectados en cuanto a las variables se refiere. Los municipios más claros son los mas afortunados, y los que tienen un tono medio son los que no se consideran ni vulnerables pero tampoco afectados. 
+
+## 4.2 Modelo baseline (Regresión lineal).
+
+Para conocer qué variables explican a la variable de respuesta se plantea un modelo *baseline* definido como uno de regresión lineal.
+
+Es importante notar que en este caso las variables de respuesta son las tasas de incidencia delictiva, las cuales son variables continuas, mientras que las regresoras, son las variables que incluyen los índices de marginación y de rezago social, así como la tasa de policías.
+
+
+### Modelo lineal múltiple
+
+
+```{r}
+set.seed(1)
+
+mlm_1 <- lm(Tasa_global ~ ANALF+SBASC+OVSDE+OVSEE+OVSAE+OVPT+VHAC+PL5000+PO2SM+NOESC_614+PSDSS+GINI+PEA+tasa_poli, data=bd_std2)
+summary(mlm_1)
+```
+
+En la salida del modelo se observa que 8 $\beta$ son significativas, las demás no lo son incluido el intercepto.
+
+Se podría pensar que las variables predictoras asociadas a estas betas se pueden quitar del modelo. 
+
+La hipótesis para ver si al menos hay alguna relación es $H_0: B_1=B_2=B_3=... =B_{14}=0$ vs $H_a$: Al menos un coeficiente es diferente de cero esta prueba se hace con el estadistico F. 
+
+En el ejemplo, como p-value = 2.2e-16 menor a 0.05, se rechaza $H_0$, es decir, hay evidencia para pensar que existe al menos una variable que deba considerar en el modelo. Por otro lado, el $R^2$ ajustado es de 0.08598 ,es decir, no hay un ajuste bueno en este modelo.
+
+Como se observa en el análisis exploratorio con respecto a la correlación, las variables predictoras no tienen coeficiente mayor 0.8.
+
+Se analiza el efecto de colinealidad, por lo que se revisa la correlación y la métrica vif
+
+```{r}
+#Se usa la función vif() aplicada al objeto de la regresión
+vif_lm<- vif(mlm_1)
+#Creamos un barplot para visualizar mejor los VIF de las variables
+barplot(vif_lm, main = "VIF Values", horiz = TRUE, col="blue", xlim=c(0,10))
+abline(v = 10, lwd = 3, lty = 2, col = "red")
+```
+
+Se revisó en la teoría que si se tiene un valor en el vif mayor a 10, entonces, hay indicios de multicolinealidad, en este ejemplo, ninguna variable tiene un vif mayor a 10, por lo tanto, se puede decir que las variables predictoras no tienen problemas de multicolinealidad.
+
+Como se observó en el primer modelo *baseline*, según el $R^2$ ajustado el modelo no tiene un buen ajuste. Con base en lo anterior y con el fin de que se seleccionen a las variables que puedan explicar la tasa grobal de incidencia, se decidió aplicar métodos de selección de variables (mejor subconjunto, selección hacia atrás y selección hacia adelante). Una vez realizados, se compararon las métricas que tuvieran modelos más parsimoniosos, para ello se consideró la métrica de Bayesian Information Criterion (BIC). Y finalmente, se comparó cada modelo final de los 3 métodos.
+
+Con respecto a los resultados arrojados por los métodos de selección de variables, los tres métodos arrojaron que  se deben considerar 5 variables más aún, las variables sugeridas en cada método son las mismas. Las variables predictoras a considerar son: "OVSEE", "VHAC", "PL5000", "PO2SM" y "PEA".
+
+Se ajustaron los modelos propuestos por la selección de variables y el coeficiente de determinación no mejoró con respecto al primer modelo.
+
+**NOTA:** Los códigos de los métodos de selección de variables que se emplearon se encuentran en el apartado "ANEXO". 
+
+Se plantea otro modelo.
+
+```{r}
+#Modelo 2 con las 5 variables predictoras según los métodos de selección de variables
+mlm_2 <- lm(Tasa_global ~ OVSEE+VHAC+PL5000+PO2SM+PEA, data=bd_std2)
+summary(mlm_2)
+```
+Como se observa en el modelo 2, todas las variables predictoras son significativas, a excepción del intercepto, sin embargo, el $R^2$ ajustado sigue siendo muy bajo, lo que implica que el modelo no es un buen modelo. 
+
+Ahora, se realiza la prueba anova para verificar si es mejor considerar un modelo más sencillo.
+
+```{r}
+anova(mlm_1,mlm_2)
+```
+
+Como p value es 0.003067 < 0.05,entonces, la hipótesis nula en donde la variable ANALF=SBASC=VSDE= OVSAE= OVPT=NOESC_614=PSDSS=GINI=0, se rechaza. Esto es que no se sugiere un modelo más simple.
+Aunque las variables son significativas, al revisar el $R^2$ los ajustes no son buenos, bajo este esquema, queda trabajar con el modelo original (mlm_1) y revisar los datos atípicos y de alta palanca.
+
+Dado el comportamiento del modelo, se propone revisar a los valores atípicos y de alta palanca y en caso de que haya estos se eliminan.
+
+Datos atípicos
+
+```{r}
+
+datos_atipicos<- rstudent(mlm_1)
+#para ver culaes son los datos atípicos
+datos_atipicos[datos_atipicos< -3]
+datos_atipicos[datos_atipicos> 3]
+```
+
+Se identifican 20 datos atípicos, los cuales considera a los municipios de las entidades de Coahuila de Zaragoza (2), Colima (1), Chihuahua (3), Guanajuato (1), Nuevo León(2), Oaxaca (8), Sonora(2) y Zacatecas (32).
+
+Ahora se identifican a los datos de alta palanca
+```{r}
+##Identificar valores con alta palanca
+#Se usa la función hatvalues()
+hii_1 <- hatvalues(mlm_1)
+#cota 4(p+1)/n
+n <- dim(bd_std2)[1]
+p <- 10
+#Cota
+cota_1 <- 4*(p+1)/n
+cota_1 #0.0180254
+#Identificar valores con alta palanca
+hii_1[hii_1>cota_1]
+```
+
+Hay 85 municipios que son de alta palanca, a continuación se mencionan las entidades a donde pertenece dichos datos de alta palanca. Chiapas(5), Chihuahua(13), Durango(1), Guerrero (17), Jalisco(2), Nayarit(3), Oaxaca(36), Puebla (1), Tamaulipas(2), Veracruz (3) y Yucatán (2)
+
+
+Como última alternativa para la mejora del modelo es eliminar los valores de datos atípicos y los de alta palanca. Para ello se pondrá el renglón al que pertenecen los datos.
+
+```{r}
+#Sin datos atípicos y alta palanca
+bd_est_b <-bd_std2[!(bd_std2$CVE_MUN %in% c('5005','5012','6001','8009','8033','8061','11036','19002','19015','20063','20172','20181','20199','20319','20376','20423','20542','26065','26069','32013','7022','7064','7066','7082','7118','8007','8008','8012', '8020','8027','8029','8030','8035','8041','8046','8054','8065','8066','10014','12004','12009','12016',
+'12019','12020','12026','12041','12043', '12047','12052','12054','12062','12063','12069','12076',      '12078','12079', '14019','14061','18005','18009','18019','20007','20033','20047','20051','20103','20171',  '20186','20200','20217','20248','20253','20310','20311','20315','20352','20354','20359','20372','20389',
+'20396','20406','20411','20416','20420','20436','20448','20450','20451','20452','20477','20497','20514',    '20519','20521','20535','20536','21198','28008','28036','30067','30157','30159','31049','31075')),] 
+#Se eliminan los datos atípicos y los datos con apalancamiento
+#dim(bd_est_b) #23 variables con 2336 datos.
+```
+
+Finalmente, se comparan los modelos lineales múltiples con las 14 variables predictoras, el modelo 2 con todos los datos y el modelo 3 sin considerar a los datos de valores atípicos y alta palanca.
+
+
+
+```{r}
+#Modelo 3 con todas las variables predictoras sin datos atípicos y de alta palanca.
+
+mlm_3 <- lm(Tasa_global ~ANALF + SBASC + OVSDE + OVSEE + OVSAE + 
+    OVPT + VHAC + PL5000 + PO2SM + NOESC_614 + PSDSS + GINI + 
+    PEA + tasa_poli, data=bd_est_b)
+summary(mlm_3)
+
+```
+
+Finamente, se observa que al considerar a todas las variables, pero sin los datos de alta palanca y los valores atípicos, el $R^2$ ajustada mejora un poco, sin embargo,los datos no se ajustan bien al modelo multilineal. De hecho en este último modelo se eliminan municipios y se gana un poco más en el ajuste del modelo, sin embargo, se debe manejar con precaución la eliminación de las observaciones. Con base en lo anterior, se elige al modelo "mlm_3".
+
+Continuando con el análisis, lo que resta es comprobar los residuales del modelo final para ver si se cumplen los supuestos.
+
+Se realizan las gráficas del modelo.
+
+```{r}
+par(mfrow=c(2,2))
+plot(mlm_3)
+```
+La interpretación de las gráficas es la siguiente:
+
+1.- **Residuals vs Fitted**: Se observa en la gráfica que existe cierta aleatoriedad, es decir, se observa una nube de puntos, pero además, se aprecia un comportamiento ligeramente lineal de unos puntos. Por lo tanto, se observa que el modelo se ajusta medianamente bien.
+
+2.- **Normal Q-Q**: Este gráfico nos ayuda para probar el supuesto de normalidad de los residuales, como se observa en el gráfico de qq plot los residuales pudieran cumplir el supuesto de normalidad, pues los residuales se ajustan a la recta, aunque en el último tramo se observa un desajuste a la linea. 
+
+3.-**Scale-Location**: En este gráfico uno se apoya para revisar varianza constante en los datos, en el gráfico se observa que a pesar de que la línea roja no es recta, sin embargo esta gráfica resulta ser un poco confusa porque por un lado se observa que los datos no siguen un patrón en particular, además, se observa cierta dispersión en algunos puntos, pero, también algunos municipios muestran una linea, por lo tanto, no se cumple el supuesto de varianza constante (homocedasticidad).
+
+4.- **Residuals vs Leverage**: Como muestra en el gráfico ninguna observación cae fuera de las distancias de Cook, por tanto, no se aprecian datos de alta palanca ni datos atípicos toda vez que fueron eliminados para este modelo. Además, la linea roja no es del todo recta. 
+
+Otra prueba que se suele hacer en los residuales es aplicar la prueba de normalidad de Shapiro-Wilk para revisar los residuales del modelo:
+
+La prueba de normalidad de Shapiro-Wilk utiliza las siguientes hipótesis:
+
+$H_o: \text{La muestra proviene de una población normal}$  
+$H_a: \text{La muestra no proviene de una población normal}$
+
+La regla de decisión es rechazar la hipótesis nula $H_0$ si el valor $p$ es menor que un nivel de significancia de 0.05  $\alpha = 0.05$.
+
+```{r}
+shapiro.test(mlm_3$residuals)
+```
+
+Como el p-valor es 2.2e-16 < 0.05, entonces se rechaza la hipótesis nula, es decir, la muestra no proviene de una población normal.
+
+Finalmente, como parte del análisis de los residuales, se realiza la prueba de autocorrelación, Durbin-Watson es una prueba estadística que contrasta la presencia de autocorrelación en los residuos de una regresión.
+La principal característica de una serie de datos con los residuos autocorrelacionados es la tendencia definida de los datos.
+
+La prueba de Durbin-Watson utiliza las siguientes hipótesis:
+
+$H_o: \text{No existe correlación entre los residuos}$  
+$H_a: \text{Los residuos están autocorrelacionados}$
+
+La regla de decisión es rechazar la hipótesis nula $H_0$ si el valor $p$ es menor que un nivel de significancia de 0.05  $\alpha = 0.05$.
+
+Se realiza la prueba, a continuación, se muestra la salida de la prueba.
+
+```{r}
+prueba<- dwtest(mlm_3,alternative ="two.sided",iterations = 1000)
+prueba
+```
+
+Como el p-valor es 1.88e-10 <0.05, entonces se rechaza la hipótesis nula, es decir, hay evidencia de que los residuos están autocorrelacionados lo que implica que no hay independencia.
+
+Con base en lo anterior se concluye que el modelo propuesto no es bueno, ya que a pesar de todo el análisis realizado, el $R^2$ no mejoró y los supuestos del modelo tampoco se cumplieron.
+
+**NOTA:** Se realizaron varios modelos en donde se probaron combinaciones de varias variables predictoras, sin embargo, se corroboró que la tasa de incidencia global de delitos considerados como los más dañinos(Tasa_global), no se ajustan a un modelo *baseline* de regresión lineal múltiple.
+
+Derivado de todo el análisis previo, el modelo de regresión lineal múltiple no ayuda a explicar el comportamiento de la "Tasa_global" con base en variables regresoras.
+
+### Modelo multivariado.
+
+Otra alternativa es probar conjuntamente a las tasa de delitos como variables de respuesta, para ello se utiliza un modelo de regresión multivariado.
+
+**Nota:** Para las pruebas de hipótesis, se comparan los p-valores contra  un $\alpha = 0.05$.
+
+El modelo es de la forma:
+
+$$Y_1 = \beta_{01}+\beta_{11}Z_1+\beta_{21}Z_2+...+\beta_{n1}Z_n\epsilon_1$$
+$$Y_2 = \beta_{02}+\beta_{12}Z_1+\beta_{22}Z_2+...+\beta_{n2}Z_n\epsilon_2$$
+$$Y_3 = \beta_{03}+\beta_{13}Z_1+\beta_{23}Z_2+...+\beta_{n3}Z_n\epsilon_3$$
+$$Y_4 = \beta_{03}+\beta_{13}Z_1+\beta_{23}Z_2+...+\beta_{n4}Z_n\epsilon_4$$
+$$~ donde~E(\epsilon)=E
+\begin{bmatrix}
+      \epsilon_1\\
+      \epsilon_2\\
+      \epsilon_3\\
+      \epsilon_4
+    \end{bmatrix}
+ = 0,
+~y~Var(\epsilon)= \Sigma$$
+
+
+En este ejemplo se considera la extensión multivariada de la regresión lineal múltiple, que modela la relación entre m=4 respuestas $Y_1, Y_2, Y_3,Y_4$ y un conjunto de r=14 variables predictoras $z_1, z_2,...,z_{14}$
+
+Para este modelo se asumen las 4 tasas de incidencia como variables de respuesta.
+
+```{r}
+lml_tasa_del<- lm(cbind(Feminicidio, Homic_dol,Secuestro,Del_sex)~ ANALF + SBASC + OVSDE + OVSEE + OVSAE + OVPT + VHAC + PL5000 + PO2SM + NOESC_614 + PSDSS + GINI + PEA + tasa_poli, data =bd_std2)
+```
+
+Algo importante a recordar es que los resultados de cada una de las regresiones corresponde a una regresión "univariada" sobre cada uno de los regresores.
+
+
+En la regresión multivariada, se prueba la hipótesis sobre los parámetros de la regresión multivariada. En este ejemplo se van a probar las hipótesis siguientes:
+
+1.-Porcentaje de población analfabeta de 15 años o más (ANALF) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(1)}=0, Y = Z_2B_{(2)}+ Z_3B_{(3)}+...+Z_14B_{(14)}+\epsilon$
+
+2.-Porcentaje de población de 15 años o más sin educación básica (SBASC) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(2)}=0, Y = Z_1B_{(1)}+ Z_3B_{(3)}+...+Z_14B_{(14)}+\epsilon$
+
+3.-Porcentaje de ocupantes en viviendas particulares habitadas sin drenaje ni excusado (OVSDE) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(3)}=0, Y = Z_1B_{(1)}+ Z_2B_{(2)}+...+Z_14B_{(14)}+\epsilon$
+
+4.-Porcentaje de ocupantes en viviendas particulares habitadas sin energía eléctrica (OVSEE) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(4)}=0, Y = Z_1B_{(1)}+ Z_2B_{(2)}+...+Z_14B_{(14)}+\epsilon$
+
+5.-Porcentaje de ocupantes en viviendas particulares habitadas sin agua entubada (OVSAE) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(5)}=0, Z_1B_{(1)}+ Z_2B_{(2)}+...+Z_14B_{(14)}+\epsilon$
+
+6.-Porcentaje de ocupantes en viviendas particulares habitadas con piso de tierra (OVPT) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(6)}=0, Z_1B_{(1)}+ Z_2B_{(2)}+...+Z_14B_{(14)}+\epsilon$
+
+7.-Porcentaje de viviendas particulares con hacinamiento (VHAC) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(7)}=0, Z_1B_{(1)}+ Z_2B_{(2)}+...+Z_14B_{(14)}+\epsilon$
+
+8.-Porcentaje de población que vive en localidades menores a 5 000 habitantes (PL.5000) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(8)}=0, Z_1B_{(1)}+ Z_2B_{(2)}+...+Z_14B_{(14)}+\epsilon$
+
+9.-Porcentaje de población ocupada con ingresos de hasta 2 salarios mínimos (PO2SM) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(9)}=0, Z_1B_{(1)}+ Z_2B_{(2)}+...+Z_14B_{(14)}+\epsilon$
+
+10.-Porcentaje de población de 6 a 14 años que no asiste a la escuela (NOESC_614) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(10)}=0, Z_1B_{(1)}+ Z_2B_{(2)}+...+Z_14B_{(14)}+\epsilon$
+
+11.-Porcentaje de población sin derechohabiencia a servicios de salud (PSDSS) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(11)}=0, Z_1B_{(1)}+ Z_2B_{(2)}+...+Z_14B_{(14)}+\epsilon$
+
+12.-Índice de gini (GINI) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(12)}=0, Y = Z_2B_{(2)}+ Z_3B_{(3)}+Z_4B_{(4)}+\epsilon$
+
+13.-Porcentaje de población económicamente activa de 15 años o más (PEA) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(13)}=0, Z_1B_{(1)}+ Z_2B_{(2)}+...+Z_14B_{(14)}+\epsilon$
+
+14.-Tasa de de policias municipales por cada 100,000 hab (tasa_poli) no tiene ninguna relación conjunta con las 4 tasas de delitos. Esto es: Bajo $H_0= B_{(14)}=0, Y = Z_2B_{(2)}+ Z_3B_{(3)}+...+Z_13B_{(13)}+\epsilon$
+
+```{r}
+Anova(lml_tasa_del)
+```
+
+En este caso, el estadístico de prueba toma la interacción entre las variables al mismo tiempo y revisa si alguna de estas corresponden a cero, es decir, revisará la significancia.
+
+Como se observa, en MANOVA se arroja lo siguiente para las pruebas de hipótesis.
+1. Hipótesis 1) la prueba de que el porcentaje de población analfabeta de 15 años o más (ANALF) no tiene ninguna relación conjunta con las 4 tasas de delitos, como el estadístico es 0.8193705 > 0.05, hay evidencia para no rechazar $H_0$, es decir, hay evidencia para pensar que ANALF no tiene relación conjunta con las 4 tasas de delitos.
+
+2. Hipótesis de 2) la prueba de que el porcentaje de población de 15 años o más sin educación básica (SBASC) no tiene ninguna relación conjunta con las 4 tasas de delitos, sin embargo, como el estadístico es 0.0002124 < 0.05, hay evidencia para rechazar $H_0$, es decir, hay evidencia para pensar que SBASC tiene relación conjunta  con las 4 tasas de delitos.
+
+3. Hipótesis de 3) la prueba de que el porcentaje de ocupantes en viviendas particulares habitadas sin drenaje ni excusado (OVSDE) no tiene ninguna relación conjunta con las 4 tasas de delitos, sin embargo, como el estadístico es 0.0001473 < 0.05, hay evidencia para rechazar $H_0$, es decir, hay evidencia para pensar que OVSDE tiene relación conjunta  con las 4 tasas de delitos.
+
+4. Hipótesis de 4) la prueba de que el porcentaje de ocupantes en viviendas particulares habitadas sin energía eléctrica (OVSEE) no tiene ninguna relación conjunta con las 4 tasas de delitos, sin embargo, como el estadístico es 0.0037111 < 0.05, hay evidencia para rechazar $H_0$, es decir, hay evidencia para pensar que OVSEE tiene relación conjunta  con las 4 tasas de delitos.
+
+5. Hipótesis de 5) la prueba de que el porcentaje de ocupantes en viviendas particulares habitadas sin agua entubada (OVSAE) no tiene ninguna relación conjunta con las 4 tasas de delitos, como el estadístico es 0.9565759 > 0.05, hay evidencia para rechazar $H_0$, es decir, hay evidencia para pensar que OVSAE no tiene relación conjunta  con las 4 tasas de delitos.
+
+6. Hipótesis de 6) la prueba de que el porcentaje de ocupantes en viviendas particulares habitadas con piso de tierra (OVPT) no tiene ninguna relación conjunta con las 4 tasas de delitos, como el estadístico es 0.8151445 > 0.05, hay evidencia para rechazar $H_0$, es decir, hay evidencia para pensar que OVPT no tiene relación conjunta  con las 4 tasas de delitos.
+
+7. Hipótesis de 7) la prueba de que el porcentaje de viviendas particulares con hacinamiento (VHAC) no tiene ninguna relación conjunta con las 4 tasas de delitos, sin embargo, como el estadístico es 0.0013060 < 0.05, hay evidencia para rechazar $H_0$, es decir, hay evidencia para pensar que VHAC tiene relación conjunta  con las 4 tasas de delitos.
+
+8. Hipótesis de 8) la prueba de que el porcentaje de población que vive en localidades menores a 5 000 habitantes (PL.5000) no tiene ninguna relación conjunta con las 4 tasas de delitos, como el estadístico es 0.3424115 > 0.05, hay evidencia para rechazar $H_0$, es decir, hay evidencia para pensar que PL.5000 no tiene relación conjunta  con las 4 tasas de delitos.
+
+9. Hipótesis de 9) la prueba de que el porcentaje de población ocupada con ingresos de hasta 2 salarios mínimos (PO2SM) no tiene ninguna relación conjunta con las 4 tasas de delitos, sin embargo, como el estadístico es 1.935e-08 < 0.05, hay evidencia para rechazar $H_0$, es decir, hay evidencia para pensar que PO2SM tiene relación conjunta  con las 4 tasas de delitos.
+
+10. Hipótesis de 10) la prueba de que el porcentaje de la población de 6 a 14 años que no asiste a la escuela (NOESC_614) no tiene ninguna relación conjunta con las 4 tasas de delitos, sin embargo, como el estadístico es 0.0380792 < 0.05, hay evidencia para rechazar $H_0$, es decir, hay evidencia para pensar que NOESC_614 tiene relación conjunta  con las 4 tasas de delitos.
+
+11. Hipótesis de 11) la prueba de que el porcentaje de la población sin derechohabiencia a servicios de salud (PSDSS) no tiene ninguna relación conjunta con las 4 tasas de delitos, sin embargo, como el estadístico es 0.0124194 < 0.05, hay evidencia para rechazar $H_0$, es decir, hay evidencia para pensar que PSDSS tiene relación conjunta  con las 4 tasas de delitos.
+
+12. Hipótesis de 12) la prueba de que el índice de gini (GINI) no tiene ninguna relación conjunta con las 4 tasas de delitos, sin embargo, sin embargo, como el estadístico es 0.7277565 > 0.05, hay evidencia para no rechazar $H_0$, es decir, hay evidencia para pensar que GINI no tiene relación conjunta  con las 4 tasas de delitos.
+
+13. Hipótesis de 13) la prueba de que el porcentaje de la población económicamente activa de 15 años y más (PEA) no tiene ninguna relación conjunta con las 4 tasas de delitos, sin embargo, como el estadístico es 01.558e-05 < 0.05, hay evidencia para rechazar $H_0$, es decir, hay evidencia para pensar que PEA tiene relación conjunta  con las 4 tasas de delitos.
+
+14. Hipótesis de 14) tasa de policías municipales por cada 100,000 hab (tasa_poli) no tiene ninguna relación conjunta con las 4 tasas de delitos, sin embargo, sin embargo, como el estadístico es 0.2376106  > 0.05, hay evidencia para no rechazar $H_0$, es decir, hay evidencia para pensar que tasa_poli no tiene relación conjunta  con las 4 tasas de delitos.
+
+Por lo tanto, hay evidencia para pensar que las variables regresoras: "SBASC", "OVSDE", "OVSEE", "VHAC", "PO2SM", "NOESC_614", "PSDSS" y "PEA" son  útiles para explicar conjuntamente tasas de incidencia delictivas de secuestro, homicidio doloso, feminicidio y delitos sexuales con base en un modelo multivariado.
+
+Por lo comentado en el párrafo anterior ahora se considera el modelo con las variables predictoras que son significativas.
+
+
+```{r}
+## Verificacion con un modelo reducido
+lml_tasa_del2 <-lm(cbind(Feminicidio, Homic_dol,Secuestro,Del_sex)~SBASC+OVSDE+OVSEE+VHAC+PO2SM+NOESC_614+PSDSS+PEA, data =bd_std2)
+#Anova(lml_tasa_del2)
+```
+
+Se prueban los dos modelos, para ello se realiza la prueba anidada para el caso del modelo lineal multivariado, en donde las hipótesis son:
+
+$$H_0=B_{(1)}=B_{(5)}=B_{(6)}=B_{(8)}=B_{(12)}=B_{(14)}=0, B_{(2)}=B_{(3)}=B_{(4)}=B_{(7)}=B_{(9)}=B_{(10)}=B_{(11)}=B_{(13)} \neq 0 ~ vs~ H_a=B_{(1)}=B_{(2)}=B_{(3)}=...=B_{(14)} \neq 0 $$
+
+```{r}
+anova(lml_tasa_del, lml_tasa_del2)
+```
+
+En este caso como p- value=0.7647 es mayor a alpha= 0.05,entonces, no se rechaza $H_0$, es decir, $B_{(1)}=B_{(5)}=B_{(6)}=B_{(8)}=B_{(12)}=B_{(14)}$, por lo tanto, se elige un modelo con menos variables, el modelo final es: lml_tasa_del2.
+
+Para validar se obtienen los estadísticos para probar la hipótesis antes comentada.
+Ahora, solo como validación se obtienen los estadísticos para probar la hipótesis antes comentada.
+
+```{r}
+lh.out <- linearHypothesis(lml_tasa_del, hypothesis.matrix = c("ANALF = 0", "OVSAE = 0", "OVPT = 0","PL5000 = 0","GINI = 0","tasa_poli = 0"))
+lh.out
+```
+
+En este caso, las metricas Pillai, Wilks y Hotelling-Lawley, sugieren quedarse con el modelo reducido en donde las variables predictoras significativas sí tienen relación conjunta con con las 4 tasas de delitos. El estadístico Roy, se quedó muy cerca de que no se eligiera el modelo, pues su p_valor es de  0.025884.
+
+En resumen, las variables:
+
+a. SBASC
+
+b. OVSDE
+
+c. OVSEE
+
+d. VHAC
+
+e. PO2SM
+
+f. NOESC_614
+
+g. PSDSS
+
+h. PEA
+
+Sí tienen relación conjunta con con las tasas de Secuestro, homicidio doloso, feminicidio y delitos sexuales.
+
+Como parte del análisis, también se realizaron los modelos de regresión lineal para cada una de las tasas de incidencia de los cuatro delitos de interés, sin embargo, los resultados fueron muy similares a los obtenidos con la tasa global, pues se determinó que aunque hay algunas variables regresoras que son significativas, los modelos no eran buenos. Comentado lo anterior y para no hacer muy extenso el documento códigos de los modelos están en la sección del ANEXO.
+
+Se concluye que cuando se trataron de explicar las tasas de incidencia por delito de manera individual, los ajustes de los modelos de regresión lineal salen muy débiles, por lo que aunque algunas variables independientes salieron significativas, los modelos no arrojaron buenos ajustes.
+
+Por otro lado, las variables SBASC, OVSDE, OVSEE, VHAC, PO2SM, NOESC_614, PSDSS, PEA son útiles para explicar conjuntamente las 4 tasas de incidencia por los delitos elegidos. No así cuando se realizó el análisis por separado de cada una de las tasas. Esto tiene sentido, pues como se observó en la clasificación exploratoria, al realizar los mapas, cada delito se comporta de manera diferente, de tal manera que es complejo tratar de explicar qué variables ayudar a explicar dichos fenómenos.
+
+
+## 4.3 Análisis de Componentes Principales.
+
+Se aplicará un análisis de componentes principales para reducir la dimensionalidad de los datos, esto para una mejor interpretación de qué es lo que explica al fenómeno de interés, es decir, se busca una relación entre la tasa global de delitos dañinos con las variables sociodemográficas.
+
+Para que un PCA tenga sentido, es necesario que exista una alta correlación entre los predictores, por lo que se explorará a continuación.
+
+```{r}
+bd_pca <- bd_std[,-c(1:6,16,17,20)]
+bd_pca<- na.omit(bd_pca)
+# Correlación
+cor_del <- cor(bd_pca)
+corrplot(cor_del, order = "hclust", tl.cex = 1, tl.col = "black", mar = c(0, 0, 0, 0))
+
+```
+
+Viendo la matriz de correlaciones, hay una evidente correlación positiva fuerte entre las variables OVSDE, SBASC, GINI VHAC y PL5000, mientras que con la variable NOESC_614 contra PO2SM, OVSEE, OVSAE, OVPT, OVSDE, SBASC, GINI, VHAC y PL5000, hay una fuerte correlación negativa; con respecto a las demás variables, también hay cierta correlación, en algunos casos, negativa, y en otras positiva pero muy baja. Derivado de lo anterior, el análisis de componentes principales si es factible.
+
+```{r}
+### PCA
+
+tasa.pc <- princomp(bd_pca)
+summary(tasa.pc)
+
+```
+
+Uno de los criterios para escoger el número adecuado de componentes principales, es cuidar que la varianza acumulada que expliquen, sea de por lo menos 70%, y de acuerdo con la salida del modelo, se necesitan cuatro componentes para acumular el 70.9% de la varianza del modelo. 
+
+Otros criterios son el del codo, que a partir del gráfico de sedimentación, se tiene que ubicar el cambio de trayectoria más abrupta, y en ese punto, será el número de componentes adecuado, otro es el de Kaiser, que indica conservar aquellas componentes cuyos valores propios superen a la unidad.
+
+
+```{r}
+
+scree(bd_pca, pc=TRUE, fa=FALSE)
+
+```
+
+Según el gráfico anterior, el criterio del codo sugiere dos componentes, mientras que la regla de Kaiser sugiere tres En este caso, los criterios probados indican un número diferente de componentes, sin embargo, se va a priorizar la eficiencia del modelo, es decir, se van a elegir cuatro componentes en favor de explicar lo más que se pueda de la varianza acumulada, esto pese a la idea de la técnica, que es reducir la dimensión.
+
+```{r}
+
+# Elegimos 4 comp
+#cachamos las cargas
+pc1 <- tasa.pc$loadings[,1]
+pc2 <- tasa.pc$loadings[,2]
+pc3 <- tasa.pc$loadings[,3]
+pc4 <- tasa.pc$loadings[,4]
+
+
+#graficamos
+plot(pc1, ylim = c(-1, 1.5), type = "l", lwd=2)
+lines(pc2, col="blue", lwd=2)
+lines(pc3, col="green", lwd=2)
+lines(pc4, col="purple", lwd=2)
+abline(h=0, lty=2, col="red")
+legend(x="topright", legend = c("PC1", "PC2","PC3", "PC4"),
+       fill = c("black", "blue", "green", "purple"))
+
+```
+
+Según las cargas de los componentes, por lo menos visualmente hay algunas que destacan en alguna variable, por ejemplo las cargas del componente cuatro (morado), tiene un pico muy marcado hacia abajo en las variable 11, que corresponde a PSDSS, por lo que se podría pensar que esta variable es la que define al componente cuatro, otro pico importante que se distingue es el del componente dos (azul), que se alza en la variable trece, que corresponde con PEA, así como en el componente tres (verde), que baja en la variable catorce, que es tasa_poli.
+
+Para aterrizar lo anterior, se dibuja el diagrama donde se indica qué variables son las que explican a cada uno de los componentes.
+
+```{r}
+
+fa.diagram(tasa.pc$loadings[,1:4], main = "Compontes principales")
+
+```
+
+Según el diagrama anterior, el componente uno está definido por NOESC_614, GINI, SBASC, OVSDE y VHAC, sólo la primera en sentido positivo, este componente puede estar explicando la falta de educación, desigualdad social y de una vivienda digna (por la falta de servicios sanitarios y el hacinamiento), el componente dos se define por PEA, PO2SM (esta en sentido negativo), OVSAE y OVSEE, que se refiere a la falta de servicios (agua y electricidad) y a los bajos ingresos, el componente tres se define por tasa_poli y PL5000, lo que se puede interpretar como los policías en muncicipios con poca población y por último el componente cuatro se define por OVPT y PSDSS, esta última en sentido negativo, lo que supone carencias en las viviendas y de servicios de salud.
+
+Por temas de interpretación, solo se graficarán los scores de los dos primeros componentes principales.
+
+```{r}
+biplot(tasa.pc, scale=0, cex=0.5)
+```
+
+Viendo la gráfica, se aprecia, por ejemplo, que los municipios 8008 en Chihuahua o 14061 en Jalisco, sufren tanto de la parte de la educación y vivienda digna (componente 1), así como de falta de servicios y bajos ingresos (componente 2). 
+
+Para visualizar mejor lo anterior, se graficarán los scores del primer componente, de tal manera que se distingan los municipios del país, para tener un panorama más claro y saber cómo se están comportando los municipios a partir del PCA.
+
+Lo anterior se logrará agregando los scores de cada componente de interés a la base de datos cuyo contenido son las capas del polígono que dibujan los mapas, en este sentido, por mera representación, se cambiará el signo del primer componente, esto porque casi todas las variables que lo definen son en sentido negativo, esto para mantener la congruencia con los tonos del color en los mapas. Lo que respecta a los scores del segundo componente, se queda con su signo, pues casi todas sus variables, son positivas.
+
+```{r}
+#Se cachan los scores
+comp <- data.frame(scores1 = -tasa.pc$scores[,1],
+                   scores2 = tasa.pc$scores[,2],
+                   CVE_MUN = rownames(bd_pca))
+#Uniendo las tablas
+map_mun <- merge(map_mun, comp, by= "CVE_MUN")
+
+```
+
+
+```{r}
+#Se grafica el mapa
+tm_shape(map_mun)+
+tm_fill("scores1", id="CVEGEO", palette= "Oranges",style="order",title="PCA")+
+  tm_borders("grey25",alpha=0.05)+
+  tm_layout("Scores del componente 1.",title.size=1, 
+            main.title.position="center")+
+  tm_view(view.legend.position = c("left","bottom"))
+
+```
+
+Según las proyecciones del componente 1, los municipios que más sufren situaciones de falta de eduación desigualdad social y de vivienda digna son los que se pintan de un tono más intenso, como lo son algunos de Chihuahua (8008, 8029, 8007), en Jalisco el 14061, otros de Guerrero como 12016, 12054, 12032, 12078, varios de Oaxaca como 20466, 20386, 20085, etc. 
+
+```{r}
+#Se grafica el mapa
+tm_shape(map_mun)+
+tm_fill("scores2", id="CVEGEO", palette= "Oranges",style="order",title="PCA")+
+  tm_borders("grey25",alpha=0.05)+
+  tm_layout("Scores del componente 2.",title.size=1, 
+            main.title.position="bottom")+
+  tm_view(view.legend.position = c("left","bottom"))
+```
+
+
+De acuerdo con los scores del componente 2 del gráfico anterior, los municipios más representativos son los que tienen los tonos más intensos en la escala de colores, de nuevo se encuentran municipios de Chihuahua como el 8008, 8029, 8065; en general la Península de Baja California, en Durango aparece el municipio 10023, 10014; en Colima el 6007, 6002; más hacia el centro, en Guanajuato aparece 11017, en Estado de México aparece 15116, 15057, en la parte de Guerrero el 12012, 12029; en general todo el estado de Quintana Roo y gran parte de la península de Yucatán.
+
+En general, el segundo componente es el que más  tiene similitud con el mapa de la tasa global de incidencia, sobretodo por la parte de las penínsulas del país y por algunos municipios de Chihuahua y algunos de la parte de la costa del Pacífico.
+
+
+## 4.4 Regresión lineal con componentes principales.
+
+Como se mencionó en el apartado del modelo baseline, con las variables sociodemograficas y económicas no se obtuvieron buenos modelos, por lo que ahora se considera realizar los modelos de regresión lineal múltiples con los scores obtenidos por componentes principales.
+
+```{r}
+#Se extraen los scores
+score1<-tasa.pc$score[,1]
+score2<-tasa.pc$score[,2]
+score3<-tasa.pc$score[,3]
+score4<-tasa.pc$score[,4]
+
+bd_pca_reg<-cbind(score1,score2,score3,score4,bd_std)
+
+#REGRESIÓN LINEAL MÚLTIPLE TASA GLOBAL
+
+lml_tasa_grl_cp<-lm(Tasa_global~ score1+score2+score3+score4, data = bd_pca_reg)
+summary(lml_tasa_grl_cp)
+```
+
+Como se observa en la salida del summary, aunque los los 3 últimos scores son significativos, el $R^2$ es de 0.04067, nuevamente el ajuste al modelo de regresión no es bueno, de hecho los resultados son muy similares respecto a los modelos baseline, por esa razón, ya no se realizó el análisis de residuales.
+
+Se realizó el ejercicio con las demás tasas de incidencia y los resultados son muy parecidos a los ya comentados, por esa razón los demás modelos se agregaron a la sección de Anexo.
+
+## 4.5 Modelo GLM.
+
+Como no se pudo encontrar un buen ajuste en los modelos baseline de regresión lineal sobre las tasas de incidencia, ahora se probará con el conteo de delitos, por lo que se implementará un modelo Poisson.
+
+Se crea la base con los delitos de interés además de las variables regresoras que se considerarán y para el tema de las predicciones se va a considerar a la entidad de Oaxaca por ser una entidad con gran diversidad.
+
+```{r}
+bd_delit<-merge(bd_full2,delitos_final,by= "CVE_MUN")
+
+bd_delit_f<-bd_delit[,-c(2:7,17,18,21,29)]
+
+#Se suma los delitos
+bd_delit_f$Tot_del <- rowSums(bd_delit_f[,16:19])
+
+#Renombrar
+names(bd_delit_f)[16] <- "D_Feminicidio"
+names(bd_delit_f)[17] <- "D_Homic_dol"
+names(bd_delit_f)[18] <- "D_Secuestro"
+names(bd_delit_f)[19] <- "D_Del_sex"
+
+#names(bd_delit_f)
+rownames(bd_delit_f) <- bd_delit_f$CVE_MUN
+########################################################################################
+```
+
+### Total de delitos.
+
+Se usará la función " bestglm" para seleccionar a las variables que puedan explicar al total de delitos de interés, con la métrica de un mejor poder predictivo.
+
+```{r}
+#Total de delitos
+set.seed(12345678) #Se fija la semilla para la replicabilidad
+
+Xy_del <- bd_delit_f[,-c(1,16:19)]
+
+mod_best_del <- bestglm(Xy = Xy_del, IC = "AIC", method = "exhaustive")
+#Mejor modelo
+mod_best_del$BestModel
+```
+
+Según la función "bestglm" las variables a considerar son: ANALF, SBASC, OVPT, VHAC, PL5000, PO2SM, NOESC_614, PSDSS y PEA.
+
+Se realiza el modelo glm con las variables seleccionadas.
+
+```{r}
+#Modelo poisson 
+mod_del <- glm(Tot_del ~ ANALF+SBASC+OVPT+VHAC+PL5000+PO2SM+NOESC_614+PSDSS+PEA, data = Xy_del,family =poisson(link = "log"))
+summary(mod_del)
+
+DifDev_del <- mod_del$null.deviance - mod_del$deviance
+DifDev_del #175790
+
+gl_del <- mod_del$df.null - mod_del$df.residual
+valor_p_del <- pchisq(DifDev_del, df=gl_del, lower.tail=FALSE)*2
+#El modelo si explica por ser menor a 0.05
+valor_p_del #0
+```
+La salida del summary muestra que las betas asociadas a cada variable regresora son significativas, la diferencia de devianzas fue de 175790 y el valor p de la prueba de chi cuadrada fue de 0, entonces, el modelo si explica. 
+
+A continuación se realiza la gráfica de los residuales del modelo.
+
+```{r}
+res_pearson_del <- residuals(mod_del, type='pearson')
+plot(predict(mod_del, type="response"), res_pearson_del, xlab="Valores pronosticados",
+     ylab="Residuales de Pearson estandarizados",main="Residuales de Pearson estandarizados vs. valores pronosticados")
+abline(h=3, col = "red")
+abline(h=-3,col = "red")
+```
+
+La gráfica de salida muestra que hay muchos valores atípicos.
+
+Finalmente se calcula el error de medición.
+
+```{r}
+#OAXACA
+test_del<-subset(Xy_del,rownames(Xy_del)>=20001 & rownames(Xy_del)<21000)
+
+predicciones_del <- add_ci(test_del[,c('ANALF','SBASC','OVPT','VHAC','PL5000','PO2SM','NOESC_614','PSDSS','PEA')], mod_del, names=c("lwr", "upr"), alpha = 0.05)
+
+#Error de medición
+err_glm_del <- mean((test_del$Tot_del- predicciones_del$pred)^2)
+err_glm_del
+```
+
+El error de medición fue de 17447.73.
+
+
+### Feminicidios.
+
+```{r}
+##Feminicidios
+set.seed(12345678) #Se fija la semilla para la replicabilidad
+
+Xy_fem <- bd_delit_f[,-c(1,17:20)]
+
+mod_best_fem <- bestglm(Xy = Xy_fem, IC = "AIC", method = "exhaustive")
+#Mejor modelo
+mod_best_fem$BestModel
+```
+
+Según la función "bestglm" las variables a considerar son: ANALF,SBASC,OVPT,VHAC,PL5000,PO2SM,NOESC_614 y PEA.
+Se realiza el modelo glm con las variables seleccionadas.
+
+```{r}
+#Modelo poisson 
+mod_fem <- glm(D_Feminicidio ~ ANALF+SBASC+OVPT+VHAC+PL5000+PO2SM+NOESC_614+PEA, data = Xy_fem,family =poisson(link = "log"))
+summary(mod_fem)
+
+DifDev_fem <- mod_fem$null.deviance - mod_fem$deviance
+DifDev_fem 
+
+gl_fem <- mod_fem$df.null - mod_fem$df.residual
+valor_p_fem <- pchisq(DifDev_fem, df=gl_fem, lower.tail=FALSE)*2
+#El modelo si explica por ser menor a 0.05
+valor_p_fem 
+
+```
+La salida del summary muestra que 7 betas asociadas a cada variable regresora son significativas, las betas asociadas con las variables VHAC y PEA no fueron significativas, la diferencia de devianzas fue de 1558.743 y el valor p de la prueba de chi cuadrada fue de 0, entonces, el modelo si explica. 
+
+A continuación se realiza la gráfica de los residuales del modelo.
+
+```{r}
+res_pearson_fem <- residuals(mod_fem, type='pearson')
+plot(predict(mod_fem, type="response"), res_pearson_fem, xlab="Valores pronosticados",
+     ylab="Residuales de Pearson estandarizados",main="Residuales de Pearson estandarizados vs. valores pronosticados")
+abline(h=3, col = "red")
+abline(h=-3,col = "red")
+```
+La gráfica de salida muestra que la mayoría de los puntos caen dentro del intervalo.
+
+Finalmente se calcula el error de medición.
+
+```{r}
+#OAXACA
+
+test_fem<-subset(Xy_fem,rownames(Xy_fem)>=20001 & rownames(Xy_fem)<21000)
+
+predicciones_fem <- add_ci(test_fem[,c('ANALF','SBASC','OVPT','VHAC','PL5000','PO2SM','NOESC_614','PEA')], mod_fem, names=c("lwr", "upr"), alpha = 0.05)
+
+#Error de medición
+err_glm_fem <- mean((test_fem$D_Feminicidio- predicciones_fem$pred)^2)
+err_glm_fem #0.6902303
+```
+
+El error de medición fue de 0.6902303.
+
+
+### Homicidios dolosos.
+
+```{r}
+#Homicidios
+set.seed(12345678) #Se fija la semilla para la replicabilidad
+
+Xy_hom <- bd_delit_f[,-c(1,16,18:20)]
+
+mod_best_hom <- bestglm(Xy = Xy_hom, IC = "AIC", method = "exhaustive")
+#Mejor modelo
+mod_best_hom$BestModel
+```
+
+Según la función "bestglm" las variables a considerar son: ANALF, SBASC ,OVPT, VHAC, PL5000, NOESC_614, PSDSS y PEA.
+
+Se realiza el modelo glm con las variables seleccionadas.
+
+```{r}
+#Modelo poisson 
+mod_hom <- glm(D_Homic_dol ~ ANALF+SBASC+OVPT+VHAC+PL5000+NOESC_614+ PSDSS+PEA, data = Xy_hom,family =poisson(link = "log"))
+summary(mod_hom)
+
+DifDev_hom <- mod_hom$null.deviance - mod_hom$deviance
+DifDev_hom #57041.87
+
+gl_hom <- mod_hom$df.null - mod_hom$df.residual
+valor_p_hom <- pchisq(DifDev_hom, df=gl_hom, lower.tail=FALSE)*2
+#El modelo si explica por ser menor a 0.05
+valor_p_hom #0
+
+```
+La salida del summary muestra que todas las betas asociadas a cada variable regresora son significativas, luego, la diferencia de devianzas fue de 57041.87 y el valor p de la prueba de chi cuadrada fue de 0, entonces, el modelo si explica. 
+
+A continuación se realiza la gráfica de los residuales del modelo.
+
+```{r}
+res_pearson_hom <- residuals(mod_hom, type='pearson')
+plot(predict(mod_hom, type="response"), res_pearson_hom, xlab="Valores pronosticados",
+     ylab="Residuales de Pearson estandarizados",main="Residuales de Pearson estandarizados vs. valores pronosticados")
+abline(h=3, col = "red")
+abline(h=-3,col = "red")
+
+```
+La gráfica de salida muestra que hay muchos datos atípicos.
+
+Finalmente se calcula el error de predicción.
+
+```{r}
+#OAXACA
+
+test_hom<-subset(Xy_hom,rownames(Xy_hom)>=20001 & rownames(Xy_hom)<21000)
+
+predicciones_hom <- add_ci(test_hom[,c('ANALF','SBASC','OVPT','VHAC','PL5000','NOESC_614','PSDSS','PEA')], mod_hom, names=c("lwr", "upr"), alpha = 0.05)
+
+#Error de medición
+err_glm_hom<- mean((test_hom$D_Homic_dol- predicciones_hom$pred)^2)
+err_glm_hom #5648.045
+```
+
+El error de medición fue de  5648.045
+
+
+
+### Secuestros.
+
+```{r}
+#Secuestro
+set.seed(12345678) # Se fija la semilla para la replicabilidad
+Xy_sec <- bd_delit_f[,-c(1,16:17,19:20)]
+
+mod_best_sec <- bestglm(Xy = Xy_sec, IC = "AIC", method = "exhaustive")
+#Mejor modelo
+mod_best_sec$BestModel
+```
+
+Según la función "bestglm" las variables a considerar son: ANALF, SBASC, OVSEE, OVPT, PL5000, PO2SM, NOESC_614, PSDSS, GINI y PEA.   
+
+Se realiza el modelo glm con las variables seleccionadas.
+
+```{r}
+#Modelo poisson 
+mod_sec <- glm(D_Secuestro ~ ANALF+SBASC+OVSEE+OVPT+PL5000+PO2SM+NOESC_614+PSDSS+GINI+PEA, data = Xy_sec,family =poisson(link = "log"))
+summary(mod_sec)
+
+DifDev_sec <- mod_sec$null.deviance - mod_sec$deviance
+DifDev_sec #1313.867
+
+gl_sec <- mod_sec$df.null - mod_sec$df.residual
+valor_p_sec <- pchisq(DifDev_sec, df=gl_sec, lower.tail=FALSE)*2
+#El modelo si explica por ser menor a 0.05
+valor_p_sec #7.780831e-276
+
+```
+La salida del summary muestra que 8 betas asociadas a cada variable regresora y el intercepto son significativas, sin embargo, las betas asociadas a las variables  OVPT y PO2SM no son significativas, luego, la diferencia de devianzas fue de 1313.867 y el valor p de la prueba de chi cuadrada fue de  7.780831e-276, entonces, el modelo si explica. 
+
+A continuación se realiza la gráfica de los residuales del modelo.
+
+```{r}
+res_pearson_sec <- residuals(mod_sec, type='pearson')
+plot(predict(mod_sec, type="response"), res_pearson_sec, xlab="Valores pronosticados",
+     ylab="Residuales de Pearson estandarizados",main="Residuales de Pearson estandarizados vs. valores pronosticados")
+abline(h=3, col = "red")
+abline(h=-3,col = "red")
+```
+
+La gráfica de salida muestra que la mayoría de los puntos caen dentro de los intervalos, aunque forman un patrón con evidente falta de aleatoriedad.
+
+Finalmente se calcula el error de predicción.
+
+```{r}
+#OAXACA
+test_sec<-subset(Xy_sec,rownames(Xy_sec)>=20001 & rownames(Xy_sec)<21000)
+
+predicciones_sec <- add_ci(test_sec[,c('ANALF','SBASC','OVSEE','OVPT','PL5000','PO2SM','NOESC_614','PSDSS','GINI','PEA')], mod_sec, names=c("lwr", "upr"), alpha = 0.05)
+#Error de medición
+err_glm_sec<- mean((test_sec$D_Secuestro- predicciones_sec$pred)^2)
+err_glm_sec #0.2428178
+```
+
+El error de medición fue de  0.2428178.
+
+### Delitos sexuales.
+
+```{r}
+#Delitos sexuales
+set.seed(12345678) # Se fija la semilla para la replicabilidad
+Xy_sex <- bd_delit_f[,-c(1,16:18,20)]
+
+mod_best_sex <- bestglm(Xy = Xy_sex, IC = "AIC", method = "exhaustive")
+#Mejor modelo
+mod_best_sex$BestModel
+```
+
+Según la función "bestglm" las variables a considerar son: ANALF, SBASC, OVSDE, OVPT, VHAC, PL5000, PO2SM, NOESC_614, PSDSS y PEA.   
+
+Se realiza el modelo glm con las variables seleccionadas.
+
+```{r}
+#Modelo poisson 
+mod_sex <- glm(D_Del_sex ~ ANALF+SBASC+OVSDE+OVPT+VHAC+PL5000+PO2SM+NOESC_614+PSDSS+PEA, data = Xy_sex,family =poisson(link = "log"))
+summary(mod_sex)
+
+DifDev_sex <- mod_sex$null.deviance - mod_sex$deviance
+DifDev_sex #119700.1
+
+gl_sex <- mod_sex$df.null - mod_sex$df.residual
+valor_p_sex <- pchisq(DifDev_sex, df=gl_sex, lower.tail=FALSE)*2
+#El modelo si explica por ser menor a 0.05
+valor_p_sex #0
+```
+La salida del summary muestra que todas betas asociadas a cada variable regresora y el intercepto son significativas, luego, la diferencia de devianzas fue de 119700.1 y el valor p de la prueba de chi cuadrada fue de  0, entonces, el modelo si explica. 
+
+A continuación se realiza la gráfica de los residuales del modelo.
+
+```{r}
+res_pearson_sex <- residuals(mod_sex, type='pearson')
+plot(predict(mod_sex, type="response"), res_pearson_sex, xlab="Valores pronosticados",
+     ylab="Residuales de Pearson estandarizados",main="Residuales de Pearson estandarizados vs. valores pronosticados")
+abline(h=3, col = "red")
+abline(h=-3,col = "red")
+
+```
+La gráfica de salida muestra que existe una gran cantidad de datos atípicos.
+
+Finalmente se calcula el error de medición
+
+```{r}
+#OAXACA
+test_sex<-subset(Xy_sex,rownames(Xy_sex)>=20001 & rownames(Xy_sex)<21000)
+
+predicciones_sex <- add_ci(test_sex[,c('ANALF','SBASC','OVSDE','OVPT','VHAC','PL5000','PO2SM','NOESC_614','PSDSS','PEA')], mod_sex, names=c("lwr", "upr"), alpha = 0.05)
+#Error de medición
+err_glm_sex<- mean((test_sex$D_Del_sex- predicciones_sex$pred)^2)
+err_glm_sex #3801.89
+```
+
+El error de medición fue de 3801.89.
+
+Entonces en resumen de todos los modelos Poisson presentados, se tiene lo siguiente
+
+```{r, echo=FALSE}
+
+Errores_GLM <- data.frame(Total_delitos = err_glm_del,
+                          Feminicidio = err_glm_fem,
+                          Homicidio = err_glm_hom,
+                          Secuestro = err_glm_sec,
+                          Delitos_Sexuales = err_glm_sex)
+
+knitr::kable(Errores_GLM, caption = "Errores de predicción de los modelos GLM.", align = "c", digits = 3)
+
+```
+
+
+De acuerdo con lo anterior, curiosamente los errores de predicción de los delitos de feminicidio y secuestro fueron los más bajos, sin embargo, el resto de los errores son impresionantemente más altos, llegando a unidades de millar, en este sentido, es hasta cierto punto obvio, porque se está trabajando directamente con el conteo de los delitos, sin considerar la población, es normal que las cosas se desfasen, en este caso, esta disparidad no es casualidad, pues justamente los delitos de secuestro y de feminicidio son los que menos frecuencia tuvieron en el 2020 en el país, tal como se ve en el gráfico de barras que se presenta en el apartado del análisis exploratorio.
+
+
+
+## 4.6 Árboles de decisión.
+
+Otra manera de ver qué variables son de importancia para la tasa de incidencia delictiva es con los árboles de decisión, ya que a partir del entrenamiento de estas, ayudarán a plantear un modelo predictivo. Dada la naturaleza de los datos que se están trabajando, el modelo se entrenará con los datos de todos los municipios disponibles y se probará con los datos de una entidad en específico, en este caso, con Oaxaca, ya que resulta interesante ver el comportamiento en ese estado tan particular.
+
+Se definen los datos de entrenamiento y de prueba.
+
+```{r}
+###### TRAIN Y TEST
+bd_ad <- bd_std[,-c(16,17,20)]
+
+# divida los datos en una muestra de entrenamiento y una de prueba
+set.seed(1)
+train <- bd_ad
+test <- subset(bd_ad, CVE_MUN >= 20001 & CVE_MUN < 21000)
+
+```
+
+### Tasa global.
+
+Se plantea el modelo de árbol de decisión para la tasa global.
+
+```{r}
+### ÁRBOLES DE DECISIÓN
+set.seed(13)
+mod2020_arbol <- rpart(Tasa_global ~ . -CVE_MUN-Feminicidio-Homic_dol-Secuestro-Del_sex,
+                       data = train)
+
+#Visualizar el árbol de decisión
+rpart.plot(mod2020_arbol, type = 2) #extra = 104 arboles binarios
+
+```
+
+La interpretación de los árboles de decisión se hace por "los caminos" que se tomen según los criterios de cada uno de los nodos, por ejemplo, el 14% de los datos se agrupan en el camino que tiene que ver con que sean mayores o iguales a -0.18 de la variable PSDSS y que además cumplan con que la variable GINI sea menor a -0.6, y así con todas las ramificaciones posibles. En este caso, el mayor grupo de los datos, con un 23%, se localiza en el camino donde PSDSS es menor a -0.18, ANALF es mayor o igual -0.29 y tasa_poli es mayor o igual a -0.81.
+
+
+```{r}
+
+var_imp_arbol <- mod2020_arbol$variable.importance
+barplot(var_imp_arbol, col=c(2:15), cex.names = 0.8,
+        las=2, main = "Importancia de las variables.")
+```
+
+Las cinco variables con más relevancia para el modelo son `r var_imp_arbol[1:5]`.
+
+Ya que se tiene el modelo, ahora se probará para así calcular el error de predicción y evaluar qué tanto poder predictivo tiene. Para esto, entonces primero se tienen que preparar los datos de prueba, que son los de Oaxaca.
+
+
+```{r}
+#predicción de arbol
+pred_ar <- predict(mod2020_arbol, newdata = test)
+
+#error de predicción
+err_arbol <- mean((test$Tasa_global - pred_ar)^2)
+err_arbol
+```
+
+Ahora se plantearán modelos para cada una de las tasas de delitos con el fin de ver si las variables independientes pueden explicar y predecir a la tasa en genera o por separado.
+
+### Homicidio doloso.
+
+```{r}
+### ÁRBOLES DE DECISIÓN
+set.seed(1)
+modar_homic <- rpart(Homic_dol ~ . -CVE_MUN-Feminicidio-Tasa_global-Secuestro-Del_sex,
+                       data = train)
+
+#Visualizar el árbol de decisión
+rpart.plot(modar_homic, type = 2) #extra = 104 arboles binarios
+
+var_imp_arbol <- modar_homic$variable.importance
+barplot(var_imp_arbol, col=c(2:15), cex.names = 0.8,
+        las=2, main = "Importancia de las variables.")
+
+```
+De acuerdo con el árbol de decisión, el 44% de los datos de homicidio, depende si la tasa de policías supera un valor de -3.1 y si supera -0.27 en la variable OVSEE. Complementando lo anterior, los 5 predictores más importantes son `r var_imp_arbol[1:5]`.
+
+Ahora se calcula el error de predicción.
+
+
+```{r}
+#predicción de árbol
+pred_ar_hom <- predict(modar_homic, newdata = test)
+
+#error de predicción
+err_ar_hom <- mean((test$Tasa_global - pred_ar_hom)^2)
+err_ar_hom
+
+```
+El error de predicción en el modelo cuya variable de respuesta es el homicidio doloso, es más grande que el de la tasa global.
+
+### Feminicidio.
+
+
+```{r}
+### ÁRBOLES DE DECISIÓN
+set.seed(1)
+modar_fem <- rpart(Feminicidio ~ . -CVE_MUN-Homic_dol-Tasa_global-Secuestro-Del_sex,
+                       data = train)
+
+#Visualizar el árbol de decisión
+rpart.plot(modar_fem, type = 2)
+
+var_imp_arbol <- modar_fem$variable.importance
+barplot(var_imp_arbol, col=c(2:15), cex.names = 0.8,
+        las=2, main = "Importancia de las variables.")
+
+```
+
+Particularmente con este modelo, el analfabetismo tiene casi todo que ver con la incidencia del feminicidio, pues en las ramificaciones se deciden muchos caminos con esta variable, además de que se aprecia que es muchísimo más relevante para el modelo que el resto.
+
+
+```{r}
+#predicción de arbol
+pred_ar_fem <- predict(modar_fem, newdata = test)
+
+#error de predicción
+err_ar_fem <- mean((test$Feminicidio - pred_ar_fem)^2)
+err_ar_fem
+
+```
+En este caso, el error de predicción resultó más bajo que en el modelo de homicidio doloso, esto se puede deber a la estrecha relación que abarca para todo el modelo, la variable ANALF.
+
+
+### Secuestro.
+
+```{r}
+### ÁRBOLES DE DECISIÓN
+set.seed(1)
+modar_sec <- rpart(Secuestro ~ . -CVE_MUN-Homic_dol-Tasa_global-Feminicidio-Del_sex,
+                       data = train)
+
+#Visualizar el árbol de decisión
+rpart.plot(modar_sec, type = 2) 
+
+var_imp_arbol <- modar_sec$variable.importance
+barplot(var_imp_arbol, col=c(2:15), cex.names = 0.8,
+        las=2, main = "Importancia de las variables.")
+
+```
+
+Curiosamente en este modelo, casi todos los datos se deciden por la tasa de policías por cada cien mil habitantes, ya que el 98% de los datos aparece en este grupo, otra decisión importante es la que se toma a partir de la variable PEA.
+
+En el caso de los predictores, el más relevante es justamente PEA y tasa_poli, que es con lo que el algortimo trabaja para estos datos.
+
+
+
+
+```{r}
+#predicción de árbol
+pred_ar_sec <- predict(modar_sec, newdata = test)
+
+#error de predicción
+err_ar_sec <- mean((test$Secuestro - pred_ar_sec)^2)
+err_ar_sec
+```
+El error es similar al de feminicidios, pero aún así el error más bajo lo sigue teniendo el modelo con la tasa general.
+
+
+
+### Delitos sexuales.
+
+
+```{r}
+### ÁRBOLES DE DECISIÓN
+set.seed(1)
+modar_delsex <- rpart(Del_sex ~ . -CVE_MUN-Homic_dol-Tasa_global-Feminicidio-Secuestro,
+                       data = train)
+
+#Visualizar el árbol de decisión
+rpart.plot(modar_delsex, type = 2) 
+
+var_imp_arbol <- modar_delsex$variable.importance
+barplot(var_imp_arbol, col=c(2:15), cex.names = 0.8,
+        las=2, main = "Importancia de las variables.")
+```
+
+Según el modelo anterior, la variable más relevante para la tasa de delitos sexuales, es PEA, ya que el mayor grupo de los datos se rige por ese predictor.
+
+Después de PEA, las variables más importantes son PL5000, NOESC_614, GINI y ANALF.
+
+
+
+```{r}
+#predicción de arbol
+pred_ar_delsex <- predict(modar_delsex, newdata = test)
+
+#error de predicción
+err_ar_delsex <- mean((test$Del_sex - pred_ar_delsex)^2)
+err_ar_delsex
+```
+
+Contrario a los modelos anteriores, el error de los delitos sexuales aumentó, por lo que entonces un modelo de árboles de decisión no es de mucha utilidad para explicar a los delitos sexuales con las variables que se proponen como predictoras.
+
+Entonces derivado de todos los modelos de árboles de decisión, se tiene lo siguiente
+
+```{r, echo=FALSE}
+Errores_arbol <- data.frame(Tasa_global = err_arbol,
+                    Homicidio = err_ar_hom,
+                    Feminicidio = err_ar_fem,
+                    Secuestro = err_ar_sec,
+                    Delitos_Sexuales = err_ar_delsex)
+
+knitr::kable(Errores_arbol, caption = "Errores de predicción de los modelos de árboles de decisión.", align = "c", digits = 3)
+```
+
+Como se aprecia, el menor error de predicción es el de la tasa global en general, lo cual tiene mucho sentido, pues esta tasa es la que resume a todos los delitos en conjunto.
+
+Como ilustración, se plasmará la predicción de la incidencia general en el estado de Oaxaca, que es el conjunto de datos de prueba y se  comparará con el modelo de k-means.
+
+
+```{r}
+# Se carga la cartografía de Oaxaca
+oax <- st_read(paste0(ruta1, "Capas/20mun.shp"), options = "ENCODING=WINDOWS-1252", 
+             quiet = TRUE)
+
+#Definición de la variable CVEGEO
+bd_ad2 <- bd_ad
+bd_ad2$CVEGEO <- ifelse(bd_ad2$CVE_MUN<9018,
+                                paste(0,bd_ad2$CVE_MUN,sep=""),
+                                bd_ad2$CVE_MUN)
+
+map_oax <- NULL
+#Uniendo las tablas
+map_oax<-merge(oax, bd_ad2, by= "CVEGEO")
+
+#Limpiar la base de datos y renombrando variables.
+map_oax<-map_oax[,-3]
+names(map_oax)[4] <-"CVE_MUN"
+```
+
+```{r}
+#Se cachan las predicciones
+pr_ar <- data.frame(predicc = pred_ar,
+                   CVEGEO = map_oax$CVEGEO)
+
+#Uniendo las tablas
+map_oax<-merge(map_oax, pr_ar, by= "CVEGEO")
+
+```
+
+
+```{r}
+
+#Se filtra por la entidad de prueba (Oaxaca)
+clus_del <- as.data.frame(map_mun)
+clus_kmeans <- subset(clus_del, CVE_MUN>=20001 & CVE_MUN<21000)
+
+#Se cachan los clusteres
+pr_kmeans <- data.frame(clus_kmeans = clus_kmeans$cluster,
+                        CVEGEO = map_oax$CVEGEO)
+
+```
+
+```{r}
+#Uniendo las tablas
+map_oax<-merge(map_oax, pr_kmeans, by= "CVEGEO")
+```
+
+Una vez preparados los datos para el mapa, se compara las predicciones con el modelo del árbol con el resultado de k-means.
+
+```{r}
+
+#Se grafica el mapa
+tm_shape(map_oax)+
+tm_fill("clus_kmeans", id="CVEGEO", palette= "Oranges",style="cat",title="Clústeres")+
+  tm_borders("grey25",alpha=0.05)+
+  tm_layout("Clasificación k-means",title.size=1, 
+            main.title.position="center")+
+  tm_view(view.legend.position = c("left","bottom"))
+
+
+#Se grafica el mapa
+tm_shape(map_oax)+
+tm_fill("predicc", id="CVEGEO", palette= "Oranges",style="kmeans",n=3,title="Tasa")+
+  tm_borders("grey25",alpha=0.05)+
+  tm_layout("Predicciones de árbol de decisión.",title.size=1, 
+            main.title.position="center")+
+  tm_view(view.legend.position = c("left","bottom"))
+
+```
+De acuerdo con lo anterior, la predicción del árbol de decisión, dista de lo obtenido en K-means, esto hasta cierto punto es normal pues el k-means simplemente toma las variables regresoras, mientras que en el modelo de árbol de decisión se especifica cuál es la variable de respuesta. Según la predicción, la mayoría del estado no arroja una tasa delictiva global muy alta, son sólo algunos casos en donde se aprecian municipios más intensos.
+
+## 4.7 Bosques aleatorios.
+
+Continuando con el análisis, se sabe que los bosques aleatorios son una extensión de los árboles de decisión, básicamente se pueden utilizar para ver si mejoran los modelos de los árboles, por lo que se planteará el modelo que salió más alto en el de los árboles de decisión. 
+
+El modelo se hará con 500 árboles.
+
+```{r}
+# Bosques aleatorios
+
+set.seed(1)
+mod2020_rf <- randomForest(Tasa_global ~ . -CVE_MUN-Feminicidio-Homic_dol-Secuestro-Del_sex,
+                           data = train,
+                           mtry=sqrt(ncol(train)-1),
+                           ntrees=500, importance=TRUE)
+
+#GrÃ¡fico de importancia de predictores en randomforest
+varImpPlot(mod2020_rf)
+```
+
+De acuerdo con lo anterior, los cinco predictores más importantes son `r mod2020_rf$importance[5,2]`.
+
+Ahora se hará la predicción.
+
+```{r}
+#predicción de bosque
+pred_bosque <- predict(mod2020_rf, newdata = test)
+
+#error de predicción
+
+err_bosque <- mean((test$Tasa_global - pred_bosque)^2)
+err_bosque
+
+```
+Como se puede apreciar, el error es mucho menor que en en el modelo del árbol de decisión, por lo que parece que éste tiene un mejor poder predictivo.
+
+Ahora se plasmará lo anterior en un mapa.
+
+```{r}
+#Se cachan las predicciones
+pr_ar_bos <- data.frame(pred_bosque = pred_bosque,
+                   CVEGEO = map_oax$CVEGEO)
+
+#Uniendo las tablas
+
+map_oax<-merge(map_oax, pr_ar_bos, by= "CVEGEO")
+
+```
+
+
+
+```{r}
+
+#Se grafica el mapa
+tm_shape(map_oax)+
+tm_fill("pred_bosque", id="CVEGEO", palette= "Oranges",style="kmeans", n=3,title="Tasa global")+
+  tm_borders("grey25",alpha=0.05)+
+  tm_layout("Predicciones de bosque aleatorio",title.size=1, 
+            main.title.position="center")+
+  tm_view(view.legend.position = c("left","bottom"))
+
+```
+
+Este modelo de bosques aleatorios, tiene una mayor similitud con el resultado de la clasificación k-means, a pesar de que son evidentes los cambios entre ambos algoritmos, se nota que el grupo dos es el que más conserva semejanzas, no así el grupo tres, que por cierto, es el más pequeño de la clasificación, lo cual puede estar influyendo.
+
+
+
+
+# 5. Conclusiones.
+
+* Se observó que cada uno de los delitos considerados en el análisis tienen características que los hacen únicos, por ejemplo, hay municipios en donde las tasas incidencia de cierto delito son muy altas, en cambio las de otro delito no lo son, también hay municipios que se encuentran en los casos extremos en donde todas las tasa de incidencia de los delitos considerados son muy altas, y en el otro extremo se encuentra los municipios en  donde las tasas de incidencia de delitos es muy baja. Otra razón que hace complejo el análisis de la incidencia delictiva es el hecho de que los municipios son muy heterogéneos entre sí.
+
+* Se realizaron modelos de regresión lineal múltiple en donde se analizó si las variables predictoras tenían relación con la incidencia de los delitos con base en los datos estudiados y se observó que las variables SBASC, OVSDE, OVSEE, VHAC, PO2SM, NOESC_614 , PSDSS y PEA son útiles para explicar conjuntamente las 4 tasas de incidencia por los delitos elegidos (Secuestro, Homicidio doloso, Delitos sexuales y Feminicidio). Sin embargo, cuando se realizó el análisis por separado de cada una de las tasas los ajustes de los modelos no fueron buenos a pesar de que las estimaciones asociadas a cada variable predictoras salieron significativas.
+
+* Variables predictoras en las cuales se tenía la hipótesis de que podrían ser potenciales útiles para explicar el fenómeno de la incidencia no fueron consideradas en la mayoría de los modelos, un ejemplo fue la tasa de policías municipales por cada 100,000 hab.
+
+* A pesar de que se eligieron variables de tipo socio demográfico, económicas y la tasa de policías, para explicar el fenómeno de la incidencia delictiva en el país, dado que el fenómeno es muy complejo, se considera que pueden existir otras variables que ayuden a explicar de mejor manera el fenómeno, sin embargo, dado el nivel de desagregación a  nivel municipal, es muy difícil tener acceso a esas variables.
+
+* De acuerdo al planteamiento de los objetivos lo que más funciona para explicar de manera muy general la tasa de incidencia delictiva son los algoritmos de componentes principales y bosque aleatorios.
+
+* Dado la complejidad del fenómeno en algunas ocasiones los métodos aplicados no resultaron óptimos.
+
+# 6. Limitaciones.
+
+Los modelos desarrollados en el presente trabajo son de corte transversal (información sólo de 2020), sería fundamental conocer su tendencia en los últimos años, a partir de las conjeturas que se tienen sobre sus posibles causas, sin embargo, no se cuenta con la suficiente información para desarrollar dicho modelo en esa magnitud.
+
+ 
+
+Cada delito tiene características únicas, esa es una de las razones por lo que el tema de seguridad resulta complicado para políticas públicas en el país.
+
+# 7. Recomendaciones y trabajos futuros.
+
+Se sugiere realizar el análisis de bases de datos de otros años para verificar si se observa un comportamiento similar. Además, se recomienda incluir variables adicionales en el estudio que sean accesibles a ese nivel de desagregación para que esto no sea un obstáculo.
+
+
+Adicionalmente, se recomienda ajustar modelos separados para cada mes, ya que podría haber diferencias significativas en la modelación de cada uno, además de considerar otro tipo de delitos u otro bien jurídico.
+
+# 8. Referencias.
+
+Cayuela, L. (Junio de 2010). Modelos Lineales Generalizados (GLM). Granada: Universidad de Granada.
+
+De la Fuente Fernández, S. (2011). Análisis Factorial. Madrid: Universidad Autónoma de Madrid.
+
+Rocío Erandi, B., Cruz Ramírez, N., Acosta Mesa, H., Rabbate Suárez, I., Gogeascoechea Trejo, M., Pavón León, P., & Blázquez Morales, S. (s.f.). Árboles de decisión como herramienta de diagnóstico médico. Xalapa, Veracruz: Universidad Veracruzana: Facultad de Física e Inteligencia Artifical.
+
+
+**Sitios web**
+
+https://www.jstatsoft.org/article/view/v084i06
+
+https://personales.unican.es/rasillad/docencia/m1683/m1683_01_An%C3%A1lisis_exploratorio_de_datos_espaciales.pdf
+
+https://www.tibco.com/es/reference-center/what-is-a-random-forest
+
+https://www.cienciadedatos.net/documentos/35_principal_component_analysis
+
+https://www.scielo.org.mx/scielo.php?script=sci_arttext&pid=S2448-76782019000100001
+
+https://www.inegi.org.mx/app/biblioteca/ficha.html?upc=889463907367
+
+https://www.inegi.org.mx/contenidos/productos/prod_serv/contenidos/espanol/bvinegi/productos/nueva_estruc/889463909194.pdf
+
+
+
+# 9. Anexos.
+
+## Códigos extra del modelo baseline.
+
+Códigos de la selección de variables del modelo de regresión lineal.
+
+```{r, echo=TRUE, eval=FALSE}
+
+
+## Método de mejor subconjunto con un modelo más parsimonioso
+regfit_completo <- regsubsets(Tasa_global ~ANALF+SBASC+OVSDE+OVSEE+OVSAE+OVPT+VHAC+PL5000+PO2SM+NOESC_614+PSDSS+GINI+PEA+tasa_poli , data=bd_std, nvmax=14) #Va a hacer 2^14 = 16,384 métodos
+summary(regfit_completo)
+
+reg_summary<- summary(regfit_completo)
+#El modelo más parsimonioso, usa la métrica de Bayesian 
+#Information Criterion (BIC), ya que produce los modelos 
+#más simples (parsimoniosos).
+plot(reg_summary$bic, xlab = "Number of Variables",
+ylab = "bic", type = "l")
+minimo_bic <- which.min(reg_summary$bic) #Ponemos el mínimo porque la regla 
+#dice que se selecciona al menor
+points (minimo_bic, reg_summary$bic[minimo_bic] , col = "red", cex = 2,
+pch = 20)
+#Obteniendo los valores Cp
+mms_bic <- reg_summary$bic
+# Las variables son:
+coef(regfit_completo,5)
+
+#El modelo más parsimonioso considera 5 variables y considera a las
+#variables predictoras "OVSEE", "VHAC", "PL5000", "PO2SM" y "PEA".
+#########################################################################################
+
+## Modelo selección hacia adelante
+regfit_fwd <- regsubsets(Tasa_global ~ ANALF+SBASC+OVSDE+OVSEE+OVSAE+OVPT+VHAC+PL5000+PO2SM+NOESC_614+PSDSS+GINI+PEA+tasa_poli, data=bd_std, nvmax=14, method="forward")
+summary(regfit_fwd)
+#Se guarsa la aplicación de la función summary() para obtener 
+#otros indicadores más parsimonisos
+reg_summary_fwd<- summary(regfit_fwd)
+fwd_bic <-reg_summary_fwd$bic
+#Métrica que resulta en modelos más parsimoniosos usamos 
+#BIC: Bayesian Information Criterion
+plot(reg_summary_fwd$bic, xlab = "Number of Variables",
+ylab = "bic", type = "l")
+minimo_bic <- which.min(reg_summary_fwd$bic) #Se selecciona elmodelo con 
+#el menor BIC por eso el mínimo.
+points (minimo_bic, reg_summary_fwd$bic[minimo_bic] , col = "red", cex = 2,
+pch = 20)
+# Las variables son:
+coef(regfit_fwd ,5)
+
+#Para el método de selección hacia adelante el mejor modelo es con 
+#dos variables y considera a las 
+#variables predictoras "OVSEE", "VHAC", "PL5000", "PO2SM","PEA".
+
+#########################################################################################
+
+## Modelo selección hacia atrás
+
+
+regfit_back <- regsubsets(Tasa_global ~ ANALF + SBASC + OVSDE + OVSEE + 
+    OVSAE + OVPT + VHAC + PL5000 + PO2SM + NOESC_614 + PSDSS + 
+    GINI + PEA + tasa_poli, data=bd_std, nvmax=14, method="backward")
+summary(regfit_back)
+#Se guarda la aplicación de la función summary() 
+#para obtener otros indicadores
+reg_summary_back<- summary(regfit_back)
+back_bic <- reg_summary_back$bic
+
+##Métrica que resulta en modelos más parsimoniosos usamos 
+#BIC: Bayesian Information Criterion
+plot(reg_summary_back$bic, xlab = "Number of Variables",
+ylab = "bic", type = "l")
+minimo_bic <- which.min(reg_summary_back$bic) #Se selecciona el modelo 
+#con el menor BIC por eso el mínimo.
+points (minimo_bic, reg_summary_back$bic[minimo_bic] , col = "red", cex = 2,
+pch = 20)
+
+# Las variables son:
+coef(regfit_back ,5)
+
+#Para el método de selección hacia adelante el mejor modelo 
+#es con dos variables y considera a las variables 
+#predictoras "OVSEE", "VHAC", "PL5000", "PO2SM","PEA".
+
+```
+
+
+Código para el modelado individual de cada uno de los delitos de regresión lineal.
+
+
+```{r, echo=TRUE, eval=FALSE}
+## Feminicidio
+lml_tasa_fem<- lm(Feminicidio ~ ANALF + SBASC + OVSDE + OVSEE + OVSAE + 
+    OVPT + VHAC + PL5000 + PO2SM + NOESC_614 + PSDSS + GINI + 
+    PEA + tasa_poli, data = bd_std)
+summary(lml_tasa_fem)
+
+#Con base en la salida ninguna variable es significativa 
+#además el R^2 ajustado para el modelo es de 0.00217 lo 
+#cual proporciona un ajuste no bueno al modelo.
+#Para darle formalidad al análisis, se realiza el estudio 
+#de los residuales del modelo.
+par(mfrow=c(2,2))
+plot(lml_tasa_fem)
+#Las gráficas muestran que no hay un buen ajuste al modelo, 
+#o se cumplen los supuestos de normalidad, tampoco el supuesto 
+#de varianza constante (homocedasticidad) y finalmente se 
+#observan datos de alta palanca y/o atípicos.
+
+#Se aplicó la prueba de normalidad de Shapiro-Wilk para 
+#revisar los residuales del modelo:
+shapiro.test(lml_tasa_fem$residuals)
+#Como el p-valor es 2.2e-16 <0.05, entonces se rechaza 
+#la hipótesis nula, es decir, la muestra no proviene de una 
+#población normal.
+#Finalmente, como parte del análisis de los residuales, 
+#realizamos la prueba de autocorrelación, Se aplica la prueba 
+#de Durbin-Watson.
+prueba<- dwtest(lml_tasa_fem,alternative ="two.sided",iterations = 1000)
+prueba
+
+#Como el p-valor es 0.915 >0.05, entonces no se rechaza 
+#la hipótesis nula, es decir,no  rechazo la hipótesis de 
+#que no existe correlación entre los residuos, es decir, 
+#hay evidencia de que los residuos no están autocorrelacionados.
+
+#Con base en lo anterior, se puede concluir que las variables analizadas,
+#no explican a la tasa de incidencia por feminicidio en 2020.
+
+##########################################################################################################
+
+## Homicidio doloso.
+lml_tasa_hom<- lm(Homic_dol ~ ANALF + SBASC + OVSDE + OVSEE + OVSAE + 
+    OVPT + VHAC + PL5000 + PO2SM + NOESC_614 + PSDSS + GINI + 
+    PEA + tasa_poli, data = bd_std)
+summary(lml_tasa_hom)
+
+#Según las salida del modelo las variables VHAC, NOESC_614 y PSDSS 
+#son significativa además el R^2 ajustado para el modelo es de 0.02483 
+#lo que no proporciona un buen ajuste al modelo.
+#Ahora se sugiere hacer el modelo solo con las variables que son significativas.
+lml_tasa_homb<-lm(formula = Homic_dol ~ VHAC+NOESC_614+PSDSS, data = bd_std)
+summary(lml_tasa_homb)
+#El summary muestra que las variables ya son significativas a 
+#excepción del intercepto, se observa también que el 
+#$R^2$ ajustado es de 0.02275  es decir, hay un 
+#ajuste "pobre" al modelo lineal múltiple.
+#Se realiza la prueba anova para ver si es mejor 
+#quedarse con un modelo más sencillo
+
+anova(lml_tasa_hom, lml_tasa_homb)
+#En este caso como p value es 0.135 es mayor a 0.05,
+#entonces, no se rechaza H_0, es decir, se puede elegir 
+#el modelo reducido. Sin embargo, dado que los R^2 
+#ajustados no son muy buenos pues el ajuste es muy pobre.
+
+#Para darle formalidad al análisis, se realiza 
+#el estudio de los residuales del modelo.
+par(mfrow=c(2,2))
+plot(lml_tasa_homb)
+
+#Las gráficas muestran que no hay un buen ajuste al modelo, 
+#o se cumplen los supuestos de normalidad, tampoco el supuesto 
+#de varianza constante (homocedasticidad) y finalmente se 
+#observan datos de alta palanca y/o atípicos.
+
+#Se aplicó la prueba de normalidad de Shapiro-Wilk para 
+#revisar los residuales del modelo:
+shapiro.test(lml_tasa_homb$residuals)
+
+#Como el p-valor es 2.2e-16 <0.05, entonces se rechaza la hipótesis nula, 
+#es decir, la muestra no proviene de #una población normal.
+#Finalmente, se realiza la prueba de autocorrelación, 
+#Se aplica la prueba de Durbin-Watson.
+prueba<- dwtest(lml_tasa_homb,alternative ="two.sided",iterations = 1000)
+prueba
+
+#Como el p-valor es 0.07751 >0.05, entonces no se rechaza
+#la hipótesis nula, es decir,no  rechazo la hipótesis de 
+#que no existe correlación entre los residuos, es decir, 
+#hay evidencia de que los residuos no están autocorrelacionados.
+
+#Con base en lo anterior, se puede concluir que las variables 
+#analizadas, no explican a la tasa de incidencia 
+#por homicidio en 2020 con el modelo ajustado.  
+
+#########################################################################################################
+## Secuestro.
+
+lml_tasa_sec<- lm(Secuestro ~ ANALF + SBASC + OVSDE + OVSEE + OVSAE + 
+    OVPT + VHAC + PL5000 + PO2SM + NOESC_614 + PSDSS + GINI + 
+    PEA + tasa_poli, data = bd_std)
+summary(lml_tasa_sec)
+
+#Según las salida del modelo las variables SBASC y PEA 
+#son significativa además el R^2 ajustado para el modelo es 
+#de 0.01182 por lo que no proporciona un buen ajuste al modelo.
+#Ahora se sugiere hacer el modelo solo con las variables que son 
+#significativas.
+
+#Ahora se sugiere hacer el modelo solo con las variables que 
+#son significativas.
+
+lml_tasa_secb<-lm(formula = Secuestro ~ SBASC+PEA, data = bd_std)
+summary(lml_tasa_secb)
+
+#El summary muestra que las variables ya son significativas a 
+#excepción del intercepto, se observa también que el $R^2$ ajustado 
+#es de 0.009094  es decir, hay un ajuste "pobre" al modelo lineal múltiple.
+#Se realiza la prueba anova para ver si es mejor quedarse 
+#con un modelo más sencillo
+anova(lml_tasa_sec, lml_tasa_secb)
+#En este caso como p value es 0.09601 es mayor a 0.05,entonces, 
+#no se rechaza H_0, es decir, se puede elegir el modelo reducido. 
+#Sin embargo, dado que los R^2 ajustados no son 
+#muy buenos pues el ajuste es muy pobre.
+
+#Para darle formalidad al análisis, se realiza el estudio de 
+#los residuales del modelo.
+par(mfrow=c(2,2))
+plot(lml_tasa_secb)
+
+#Las gráficas muestran que no hay un buen ajuste al modelo, 
+#o se cumplen los supuestos de normalidad, tampoco el supuesto 
+#de varianza constante (homocedasticidad) y finalmente se 
+#observan datos de alta palanca y/o atípicos.
+
+#Se aplicó la prueba de normalidad de Shapiro-Wilk para 
+#revisar los residuales del modelo:
+
+shapiro.test(lml_tasa_secb$residuals)
+#Como el p-valor es 2.2e-16 <0.05, entonces se rechaza 
+#la hipótesis nula, es decir, la muestra no proviene de 
+#una población normal.
+#Finalmente, se realiza la prueba de autocorrelación. 
+#Se aplica la prueba de Durbin-Watson.
+
+prueba<- dwtest(lml_tasa_secb,alternative ="two.sided",iterations = 1000)
+prueba
+
+#Como el p-valor es  1.134e-08 <0.05, entonces  se rechaza 
+#la hipótesis nula, es decir, se rechaza la hipótesis de que 
+#existe correlación entre los residuos, es decir, 
+#hay evidencia de que los residuos están autocorrelacionados.
+
+#Con base en lo anterior, se puede concluir que las variables analizadas, 
+#no explican a la tasa de incidencia por secuestro en 2020 
+#con el modelo ajustado.  
+
+####################################################################################################
+
+## Delitos sexuales
+
+lml_tasa_sex<- lm(Del_sex ~ ANALF + SBASC + OVSDE + OVSEE + OVSAE + 
+    OVPT + VHAC + PL5000 + PO2SM + NOESC_614 + PSDSS + GINI + 
+    PEA + tasa_poli, data = bd_std)
+summary(lml_tasa_sex)
+
+#Según las salida del modelo las variables SBASC, OVSDE, OVSEE, PO2SM y PEA 
+#son significativa además el R^2 ajustado para el modelo es de 0.1144 
+#lo que no proporciona un buen ajuste al modelo.
+#Ahora se sugiere hacer el modelo solo con las variables que son significativas.
+
+lml_tasa_sexb<-lm(formula = Del_sex ~ SBASC+OVSDE+OVSEE+PO2SM+PEA, data = bd_std)
+summary(lml_tasa_sexb)
+#El summary muestra que las variables ya son significativas a 
+#excepción del intercepto, se observa también que el $R^2$ ajustado es de 0.1144  
+#es decir, hay un ajuste "pobre" al modelo lineal múltiple.
+#Se realiza la prueba anova para ver si es mejor quedarse con un modelo más sencillo
+
+anova(lml_tasa_sex, lml_tasa_sexb)
+#En este caso como p value es 0.4361 es mayor a 0.05,entonces, 
+#no se rechaza H_0, es decir, se puede elegir el modelo reducido. 
+#Sin embargo, dado que los R^2 ajustados no son muy buenos pues el 
+#ajuste es muy pobre.
+
+#Para darle formalidad al análisis, se realiza el estudio de los residuales del modelo.
+par(mfrow=c(2,2))
+plot(lml_tasa_sexb)
+
+#Las gráficas muestran que no hay un buen ajuste al modelo, 
+#o se cumplen los supuestos de normalidad, tampoco el supuesto 
+#de varianza constante (homocedasticidad) y finalmente se 
+#observan datos de alta palanca y/o atípicos.
+
+#Se aplicó la prueba de normalidad de Shapiro-Wilk para 
+#revisar los residuales del modelo:
+
+shapiro.test(lml_tasa_sexb$residuals)
+#Como el p-valor es 2.2e-16 <0.05, entonces se rechaza la hipótesis nula, 
+#es decir, la muestra no proviene de #una población normal.
+#Finalmente, se realiza la prueba de autocorrelación.
+#Se aplica la prueba de Durbin-Watson.
+
+prueba<- dwtest(lml_tasa_sexb,alternative ="two.sided",iterations = 1000)
+prueba
+
+#Como el p-valor es  0.0009998 <0.05, entonces  
+#se rechaza la hipótesis nula, es decir, se rechaza 
+#la hipótesis de que existe correlación entre los residuos, 
+#es decir, hay evidencia de que los residuos están autocorrelacionados.
+
+
+#Con base en lo anterior, se puede concluir que las variables 
+#analizadas, no explican a la tasa de incidencia por  delitos 
+#sexuales en 2020 con el modelo ajustado.  
+
+```
+
+
+## Códigos extra del modelo de regresión lineal con componentes principales.
+
+
+```{r, echo=TRUE, eval=FALSE}
+#REGRESIÓN LINEAL MÚLTIPLE FEMINICIDIO
+lml_fem_cp<-lm(Feminicidio~ score1+score2+score3+score4, data = bd_pca_reg)
+summary(lml_fem_cp)
+#Como se observa en la salida del summary, aunque los 3 scores y 
+#el intercepto son significativos, el $R^2$ es de 0.004454, 
+#nuevamente el ajuste al modelo de regresión no es bueno.
+
+#REGRESIÓN LINEAL MÚLTIPLE HOMICIDIO
+lml_hom_cp<-lm(Homic_dol~ score1+score2+score3+score4, data = bd_pca_reg)
+summary(lml_hom_cp)
+#Como se observa en la salida del summary, aunque todos los 
+#scores son significativos, el $R^2$ es de 0.01379,
+#nuevamente el ajuste al modelo de regresión no es bueno.
+
+#REGRESIÓN LINEAL MÚLTIPLE SECUESTRO
+lml_sec_cp<-lm(Secuestro~ score1+score2+score3+score4, data = bd_pca_reg)
+summary(lml_sec_cp)
+
+#Como se observa en la salida del summary, el intercepto 
+#y los score 1 y 2 son signficativos, el $R^2$ es de 0.005997,
+#nuevamente el ajuste al modelo de regresión no es bueno.
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
