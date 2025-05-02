@@ -20,8 +20,6 @@ Este repositorio contiene el análisis de la incidencia delictiva a nivel munici
 4. `Logo.png`: imagen utilizada en el documento.
 5. Carpeta `Capas`: contiene archivos necesarios para generar los mapas a nivel municipal.
 
-El análisis se basa en datos públicos y tiene como finalidad apoyar la toma de decisiones y el diseño de políticas públicas con base en evidencia estadística.
-
 Información de contacto Autora: Martha Aguilar Jiménez, Correo electrónico:martha.aguilar@cimat.mx
 
 
