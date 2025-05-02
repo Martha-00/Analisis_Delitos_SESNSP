@@ -9,6 +9,7 @@ Este repositorio contiene el análisis de la incidencia delictiva a nivel munici
 ## Contenido del repositorio
 1. `Tasa de incidencia SESNSP.RMD`: archivo principal en R Markdown, donde se desarrolla el análisis.
 2. `Tasa de incidencia SESNSP.pdf`: versión en PDF del archivo anterior, lista para entrega o difusión.
+**NOTA**: Descargar archivo de datos en la siguiente liga: https://drive.google.com/file/d/12LMrJN4LsVa8LpytbKe79_-LdTD620dy/view?usp=drive_link
 3. Bases de datos utilizadas:
    - `Municipal-Delitos-2015-2021_dic2021`: base principal con datos delictivos registrados en averiguaciones previas y carpetas de investigación iniciadas, descargada del **SESNSP**.
    - `gini`: contiene el Índice de Cohesión Social (GINI 2020) a nivel municipal (fuente: CONEVAL).
