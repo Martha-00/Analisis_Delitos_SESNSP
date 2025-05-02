@@ -19,7 +19,7 @@ https://drive.google.com/file/d/12LMrJN4LsVa8LpytbKe79_-LdTD620dy/view?usp=drive
    - `IRS_2020`: Índice de Rezago Social 2020 (fuente: CONEVAL).
    - `m3s1p2_cngmd2021`: número de policías a nivel municipal (fuente: INEGI).
    - `Info_Proy_CD`: archivo auxiliar con el listado de variables seleccionadas de las bases anteriores para el análisis.
-5. `Logo.png`: imagen utilizada en el documento.
+5. `INEGI.png`: imagen utilizada en el documento.
 6. Carpeta `Capas`: contiene archivos necesarios para generar los mapas a nivel municipal.
 
 Información de contacto Autora: Martha Aguilar Jiménez, Correo electrónico:martha.aguilar@cimat.mx
