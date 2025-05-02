@@ -9,8 +9,9 @@ Este repositorio contiene el análisis de la incidencia delictiva a nivel munici
 ## Contenido del repositorio
 1. `Tasa de incidencia SESNSP.RMD`: archivo principal en R Markdown, donde se desarrolla el análisis.
 2. `Tasa de incidencia SESNSP.pdf`: versión en PDF del archivo anterior, lista para entrega o difusión.
-**NOTA**: Descargar archivo de datos en la siguiente liga: https://drive.google.com/file/d/12LMrJN4LsVa8LpytbKe79_-LdTD620dy/view?usp=drive_link
-3. Bases de datos utilizadas:
+**NOTA**: Debido al gran tamaño del archivo (60.8 MB) se solicita descargar archivo de datos en la siguiente liga:
+https://drive.google.com/file/d/12LMrJN4LsVa8LpytbKe79_-LdTD620dy/view?usp=drive_link
+4. Bases de datos utilizadas:
    - `Municipal-Delitos-2015-2021_dic2021`: base principal con datos delictivos registrados en averiguaciones previas y carpetas de investigación iniciadas, descargada del **SESNSP**.
    - `gini`: contiene el Índice de Cohesión Social (GINI 2020) a nivel municipal (fuente: CONEVAL).
    - `IMM_2020`: información del Índice de Marginación 2020 (fuente: CONAPO).
@@ -18,8 +19,8 @@ Este repositorio contiene el análisis de la incidencia delictiva a nivel munici
    - `IRS_2020`: Índice de Rezago Social 2020 (fuente: CONEVAL).
    - `m3s1p2_cngmd2021`: número de policías a nivel municipal (fuente: INEGI).
    - `Info_Proy_CD`: archivo auxiliar con el listado de variables seleccionadas de las bases anteriores para el análisis.
-4. `Logo.png`: imagen utilizada en el documento.
-5. Carpeta `Capas`: contiene archivos necesarios para generar los mapas a nivel municipal.
+5. `Logo.png`: imagen utilizada en el documento.
+6. Carpeta `Capas`: contiene archivos necesarios para generar los mapas a nivel municipal.
 
 Información de contacto Autora: Martha Aguilar Jiménez, Correo electrónico:martha.aguilar@cimat.mx
 
